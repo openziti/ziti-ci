@@ -1,0 +1,6 @@
+if: tag IS blank
+
+language: go
+
+go:
+  - "1.13"
