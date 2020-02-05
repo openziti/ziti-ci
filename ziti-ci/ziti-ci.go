@@ -22,6 +22,12 @@ const (
 	DefaultVersionFile = "./common/version/VERSION"
 )
 
+type langType int
+
+const (
+	LangGo langType = 1
+)
+
 var verbose = true
 var dryRun = false
 
@@ -30,6 +36,9 @@ var baseVersionFile string
 
 var gitUsername string
 var gitEmail string
+
+var langName string
+var lang langType
 
 func main() {
 	var root = &cobra.Command{
@@ -41,6 +50,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "do a dry run")
 	root.PersistentFlags().StringVar(&gitUsername, "git-username", "ziti-ci", "override the default git username")
 	root.PersistentFlags().StringVar(&gitEmail, "git-email", "ziti-ci@netfoundry.io", "override the default git email")
+	root.PersistentFlags().StringVarP(&langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
 
 	var tag = &cobra.Command{
 		Use:   "tag",
@@ -59,7 +69,21 @@ func main() {
 	}
 }
 
+func setLangType(cmd *cobra.Command) {
+	if langName == "" {
+		return
+	}
+	if strings.EqualFold("go", langName) {
+		lang = LangGo
+	} else {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unsupported language: '%v'\n", langName)
+		os.Exit(-1)
+	}
+}
+
 func runTag(cmd *cobra.Command, args []string) {
+	setLangType(cmd)
+
 	if baseVersionString == "" {
 		loadBaseVersion(cmd)
 	}
@@ -83,12 +107,14 @@ func runTag(cmd *cobra.Command, args []string) {
 	env.evalPrevAndNextVersion()
 	_, _ = fmt.Fprintf(cmd.OutOrStderr(), "previous version: %v, next version: %v\n", env.prevVersion, env.nextVersion)
 
-	nextMajorVersion := env.nextVersion.Segments()[0]
-	if nextMajorVersion > 1 {
-		moduleName := env.getModule()
-		if !strings.HasSuffix(moduleName, fmt.Sprintf("/v%v", nextMajorVersion)) {
-			_, _ = fmt.Fprintf(cmd.OutOrStderr(), "error: module version doesn't match next version: %v\n", nextMajorVersion)
-			os.Exit(-1)
+	if lang == LangGo {
+		nextMajorVersion := env.nextVersion.Segments()[0]
+		if nextMajorVersion > 1 {
+			moduleName := env.getModule()
+			if !strings.HasSuffix(moduleName, fmt.Sprintf("/v%v", nextMajorVersion)) {
+				_, _ = fmt.Fprintf(cmd.OutOrStderr(), "error: module version doesn't match next version: %v\n", nextMajorVersion)
+				os.Exit(-1)
+			}
 		}
 	}
 
