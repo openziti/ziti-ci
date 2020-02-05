@@ -1,7 +1,5 @@
 version: "~> 1.0"
 
-if: tag IS blank
-
 before_install:
   - openssl aes-256-cbc -K $encrypted_df4614385a19_key -iv $encrypted_df4614385a19_iv -in github_deploy_key.enc -out github_deploy_key -d
 
