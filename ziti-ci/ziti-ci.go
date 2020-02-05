@@ -119,6 +119,9 @@ func runTag(cmd *cobra.Command, args []string) {
 	}
 
 	tagVersion := fmt.Sprintf("%v", env.nextVersion)
+	if lang == LangGo {
+		tagVersion = "v" + tagVersion
+	}
 	tagParms := []string{"tag", "-a", tagVersion, "-m", fmt.Sprintf("Release %v", tagVersion)}
 	env.runGitCommand("create tag", tagParms...)
 
