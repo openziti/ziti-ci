@@ -1,5 +1,9 @@
 if: tag IS blank
 
+branches:
+  only:
+    - master
+
 language: go
 
 go:
