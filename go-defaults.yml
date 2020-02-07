@@ -3,6 +3,7 @@ if: tag IS blank
 branches:
   only:
     - master
+    - /^v\d+.*/
 
 language: go
 
