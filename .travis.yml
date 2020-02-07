@@ -1,7 +1,7 @@
 version: "~> 1.0"
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_df4614385a19_key -iv $encrypted_df4614385a19_iv -in github_deploy_key.enc -out github_deploy_key -d
+  - echo $encrypted_var1 > github_deploy_key
 
 import:
   - go-defaults.yml
