@@ -1,8 +1,5 @@
 version: "~> 1.0"
 
-before_install:
-  - echo $encrypted_var1 > github_deploy_key
-
 import:
   - go-defaults.yml
   - git-setup.yml
