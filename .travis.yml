@@ -9,6 +9,8 @@ import:
 script:
   - mkdir -p tmp
   - go build -o tmp ./...
+  - ./tmp/ziti-ci generate-build-info ziti-ci/build_info.go main
+  - go build -o tmp ./...
 
 deploy:
   provider: releases
