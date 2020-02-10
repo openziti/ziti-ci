@@ -3,11 +3,12 @@ version: "~> 1.0"
 import:
   - go-defaults.yml
   - git-setup.yml
+  - source: versioning.yml
+    if: type != pull_request
 
 script:
-  - mkdir build
-  - go build -o build ./...
-  - ./build/ziti-ci tag -v
+  - mkdir tmp
+  - go build -o tmp ./...
 
 deploy:
   provider: releases
