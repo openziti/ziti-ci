@@ -179,7 +179,10 @@ func generateBuildInfo(cmd *cobra.Command, args []string) {
 	tagVersion := fmt.Sprintf("v%v", env.nextVersion)
 
 	branchName := env.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
-	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found {
+
+	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
+		branchName = val
+	} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
 		branchName = val
 	}
 
