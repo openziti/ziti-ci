@@ -17,4 +17,4 @@ deploy:
   file: "./build/ziti-ci"
   on:
     repo: netfoundry/ziti-ci
-    branch: key-in-env
+    branch: build-info
