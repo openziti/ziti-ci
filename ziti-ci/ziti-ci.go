@@ -72,6 +72,15 @@ func main() {
 
 	root.AddCommand(buildInfo)
 
+	var version = &cobra.Command{
+		Use:   "version",
+		Short: "Show build information",
+		Args:  cobra.ExactArgs(0),
+		Run:   showBuildInfo,
+	}
+
+	root.AddCommand(version)
+
 	if err := root.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(-1)
@@ -169,11 +178,16 @@ func generateBuildInfo(cmd *cobra.Command, args []string) {
 
 	tagVersion := fmt.Sprintf("v%v", env.nextVersion)
 
+	branchName := env.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
+	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found {
+		branchName = val
+	}
+
 	buildInfo := &BuildInfo{
 		PackageName: args[1],
 		Version:     tagVersion,
 		Revision:    env.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD"),
-		Branch:      env.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD"),
+		Branch:      branchName,
 		BuildUser:   getUsername(cmd),
 		BuildDate:   time.Now().Format("2006-01-02 15:04:05"),
 	}
@@ -229,4 +243,8 @@ func getUsername(cmd *cobra.Command) string {
 		return "unknown"
 	}
 	return currUser.Name
+}
+
+func showBuildInfo(*cobra.Command, []string) {
+	fmt.Printf("ziti-cmd version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n", Version, Revision, Branch, BuildUser, BuildDate)
 }
