@@ -99,8 +99,7 @@ func runTag(cmd *cobra.Command, args []string) {
 		baseVersion: getBaseVersion(cmd),
 	}
 
-	env.runGitCommand("set git username", "config", "user.name", gitUsername)
-	env.runGitCommand("set git password", "config", "user.email", gitEmail)
+	env.setupGitEnv(gitUsername, gitEmail)
 
 	env.evalVersions()
 	env.ensureNotAlreadyTagged()
@@ -164,7 +163,7 @@ func generateBuildInfo(cmd *cobra.Command, args []string) {
 		args:        args,
 		baseVersion: getBaseVersion(cmd),
 	}
-
+	env.setupGitEnv(gitUsername, gitEmail)
 	env.evalVersions()
 	env.evalPrevAndNextVersion()
 
@@ -196,6 +195,9 @@ func generateBuildInfo(cmd *cobra.Command, args []string) {
 		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "failure executing build template to output file %v. err: %+v\n", args[0], err)
 		os.Exit(-1)
 	}
+
+	env.runGitCommand("add build info file to git", "add", args[0])
+	env.runGitCommand("commit build info file", "commit", "-m", fmt.Sprintf("Release %v", tagVersion))
 }
 
 func getBaseVersion(cmd *cobra.Command) *version.Version {

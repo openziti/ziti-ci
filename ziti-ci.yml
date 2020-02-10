@@ -1,4 +1,4 @@
-after_success:
+before_install:
   - set -e
   - mkdir tmp
   - "[ -z \"$ZITI_CI_VERSION\" ] && curl -v -L https://github.com/netfoundry/ziti-ci/releases/download/v0.3.0/ziti-ci -o ./tmp/ziti-ci || /bin/true"

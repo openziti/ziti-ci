@@ -69,6 +69,11 @@ func (env *runEnv) runGitCommand(description string, params ...string) {
 	}
 }
 
+func (env *runEnv) setupGitEnv(gitUsername, gitEmail string) {
+	env.runGitCommand("set git username", "config", "user.name", gitUsername)
+	env.runGitCommand("set git password", "config", "user.email", gitEmail)
+}
+
 func (env *runEnv) getCmdOutputOneLine(description string, cmd string, params ...string) string {
 	output := env.runCommandWithOutput(description, cmd, params...)
 	if len(output) != 1 {
