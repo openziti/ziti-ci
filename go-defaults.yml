@@ -1,9 +1,10 @@
 if: tag IS blank
 
-branches:
-  only:
-    - master
-    - /^v\d+.*/
+# TODO: Uncomment after test
+# branches:
+#   only:
+#     - master
+#     - /^v\d+.*/
 
 language: go
 
