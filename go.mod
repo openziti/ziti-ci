@@ -1,4 +1,4 @@
-module netfoundry/ziti-ci-golang
+module netfoundry/ziti-ci
 
 go 1.13
 
