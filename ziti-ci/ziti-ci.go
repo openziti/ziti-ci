@@ -21,7 +21,7 @@ const (
 
 const (
 	DefaultVersionFile  = "./version"
-	DefaultSshKeyEnvVar = "gh-ci-key"
+	DefaultSshKeyEnvVar = "gh_ci_key"
 	DefaultSshKeyFile   = "github_deploy_key"
 )
 
