@@ -1,5 +1,3 @@
-import: ziti-ci.yml
-
 before_install:
   - set -e
   - ziti-ci configure-git

@@ -1,4 +1,2 @@
-import: ziti-ci.yml
-
 after_success:
   - ziti-ci tag -v -f "$VERSION_FILE"
