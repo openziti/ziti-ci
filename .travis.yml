@@ -15,7 +15,6 @@ script:
   - eval $(ssh-agent -s)
   - ssh-add github_deploy_key
 
-
 deploy:
   provider: releases
   skip_cleanup: true
