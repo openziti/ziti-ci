@@ -1,6 +1,5 @@
 before_install:
   - set -e
-  - echo $gh_ci_key | base64 -d - > github_deploy_key
-  - chmod 600 github_deploy_key
+  - ziti-ci configure-git
   - eval $(ssh-agent -s)
   - ssh-add github_deploy_key
