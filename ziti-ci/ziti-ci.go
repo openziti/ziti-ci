@@ -287,7 +287,7 @@ func configureGit(cmd *cobra.Command, args []string) {
 			os.Exit(-1)
 		}
 	} else {
-		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to read ssh key from env var %v\n", sshKeyEnv)
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to read ssh key from env var %v. Found? %v\n", sshKeyEnv, found)
 		os.Exit(-1)
 	}
 }
