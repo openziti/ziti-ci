@@ -1,4 +1,4 @@
-module netfoundry/ziti-ci
+module github.com/netfoundry/ziti-ci
 
 go 1.13
 
