@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
@@ -19,7 +20,9 @@ const (
 )
 
 const (
-	DefaultVersionFile = "./version"
+	DefaultVersionFile  = "./version"
+	DefaultSshKeyEnvVar = "gh-ci-key"
+	DefaultSshKeyFile   = "github_deploy_key"
 )
 
 type langType int
@@ -40,48 +43,63 @@ var gitEmail string
 var langName string
 var lang langType
 
+var sshKeyEnv string
+var sshKeyFile string
+
 func main() {
-	var root = &cobra.Command{
+	var rootCmd = &cobra.Command{
 		Use:   "ziti-ci",
 		Short: "Ziti CI Tool",
 	}
 
-	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
-	root.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "do a dry run")
-	root.PersistentFlags().StringVar(&gitUsername, "git-username", "ziti-ci", "override the default git username")
-	root.PersistentFlags().StringVar(&gitEmail, "git-email", "ziti-ci@netfoundry.io", "override the default git email")
-	root.PersistentFlags().StringVarP(&langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
+	rootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "do a dry run")
+	rootCmd.PersistentFlags().StringVar(&gitUsername, "git-username", "ziti-ci", "override the default git username")
+	rootCmd.PersistentFlags().StringVar(&gitEmail, "git-email", "ziti-ci@netfoundry.io", "override the default git email")
+	rootCmd.PersistentFlags().StringVarP(&langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
 
-	var tag = &cobra.Command{
+	var tagCmd = &cobra.Command{
 		Use:   "tag",
 		Short: "Tag and push command",
 		Run:   runTag,
 	}
 
-	tag.PersistentFlags().StringVarP(&baseVersionString, "base-version", "b", "", "set base version")
-	tag.PersistentFlags().StringVarP(&baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")
+	tagCmd.PersistentFlags().StringVarP(&baseVersionString, "base-version", "b", "", "set base version")
+	tagCmd.PersistentFlags().StringVarP(&baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")
 
-	root.AddCommand(tag)
+	rootCmd.AddCommand(tagCmd)
 
-	var buildInfo = &cobra.Command{
+	var buildInfoCmd = &cobra.Command{
 		Use:   "generate-build-info output-file go-package",
 		Short: "Tag and push command",
 		Args:  cobra.ExactArgs(2),
 		Run:   generateBuildInfo,
 	}
 
-	root.AddCommand(buildInfo)
+	rootCmd.AddCommand(buildInfoCmd)
 
-	var version = &cobra.Command{
+	var versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Show build information",
 		Args:  cobra.ExactArgs(0),
 		Run:   showBuildInfo,
 	}
 
-	root.AddCommand(version)
+	rootCmd.AddCommand(versionCmd)
 
-	if err := root.Execute(); err != nil {
+	var setupGitCmd = &cobra.Command{
+		Use:   "configure-git",
+		Short: "Configure git",
+		Args:  cobra.ExactArgs(0),
+		Run:   configureGit,
+	}
+
+	setupGitCmd.PersistentFlags().StringVar(&sshKeyEnv, "ssh-key-env-var", DefaultSshKeyEnvVar, "set ssh key environment variable name")
+	setupGitCmd.PersistentFlags().StringVar(&sshKeyFile, "ssh-key-file", DefaultSshKeyFile, "set ssh key file name")
+
+	rootCmd.AddCommand(setupGitCmd)
+
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(-1)
 	}
@@ -99,7 +117,7 @@ func setLangType(cmd *cobra.Command) {
 	}
 }
 
-func runTag(cmd *cobra.Command, args []string) {
+func newRunEnv(cmd *cobra.Command, args []string) *runEnv {
 	setLangType(cmd)
 
 	env := &runEnv{
@@ -108,8 +126,11 @@ func runTag(cmd *cobra.Command, args []string) {
 		baseVersion: getBaseVersion(cmd),
 	}
 
-	env.setupGitEnv(gitUsername, gitEmail)
+	return env
+}
 
+func runTag(cmd *cobra.Command, args []string) {
+	env := newRunEnv(cmd, args)
 	env.evalVersions()
 	env.ensureNotAlreadyTagged()
 	env.evalPrevAndNextVersion()
@@ -165,14 +186,7 @@ type BuildInfo struct {
 }
 
 func generateBuildInfo(cmd *cobra.Command, args []string) {
-	setLangType(cmd)
-
-	env := &runEnv{
-		cmd:         cmd,
-		args:        args,
-		baseVersion: getBaseVersion(cmd),
-	}
-	env.setupGitEnv(gitUsername, gitEmail)
+	env := newRunEnv(cmd, args)
 	env.evalVersions()
 	env.evalPrevAndNextVersion()
 
@@ -226,7 +240,13 @@ func getBaseVersion(cmd *cobra.Command) *version.Version {
 		if err != nil {
 			currdir, _ := os.Getwd()
 			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to load base version information from '%v'. current dir: '%v'\n", baseVersionFile, currdir)
-			os.Exit(-1)
+
+			contents, err = ioutil.ReadFile("./common/version/VERSION")
+			if err != nil {
+				currdir, _ = os.Getwd()
+				_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to load base version information from '%v'. current dir: '%v'\n", baseVersionFile, currdir)
+				os.Exit(-1)
+			}
 		}
 		baseVersionString = string(contents)
 		baseVersionString = strings.TrimSpace(baseVersionString)
@@ -250,4 +270,24 @@ func getUsername(cmd *cobra.Command) string {
 
 func showBuildInfo(*cobra.Command, []string) {
 	fmt.Printf("ziti-cmd version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n", Version, Revision, Branch, BuildUser, BuildDate)
+}
+
+func configureGit(cmd *cobra.Command, args []string) {
+	env := newRunEnv(cmd, args)
+	env.setupGitEnv(gitUsername, gitEmail)
+
+	if val, found := os.LookupEnv(sshKeyEnv); found && val != "" {
+		sshKey, err := base64.StdEncoding.DecodeString(val)
+		if err != nil {
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to decode ssh key. err: %v\n", err)
+			os.Exit(-1)
+		}
+		if err = ioutil.WriteFile(sshKeyFile, sshKey, 0600); err != nil {
+			_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to write ssh key file %v. err: %v\n", sshKeyFile, err)
+			os.Exit(-1)
+		}
+	} else {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to read ssh key from env var %v\n", sshKeyEnv)
+		os.Exit(-1)
+	}
 }

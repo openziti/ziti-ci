@@ -1,6 +1,5 @@
 before_install:
   - set -e
-  - mkdir tmp
-  - "[ -z \"$ZITI_CI_VERSION\" ] && curl -v -L https://github.com/netfoundry/ziti-ci/releases/download/v0.3.13/ziti-ci -o ./tmp/ziti-ci || /bin/true"
-  - "[ ! -z \"$ZITI_CI_VERSION\" ] && curl -v -L https://github.com/netfoundry/ziti-ci/releases/download/$ZITI_CI_VERSION/ziti-ci -o ./tmp/ziti-ci || /bin/true"
-  - chmod +x ./tmp/ziti-ci
+  - "[ -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci@v1 || /bin/true"
+  - "[ ! -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci@$ZITI_CI_VERSION || /bin/true"
+  - echo $(which ziti-ci)
