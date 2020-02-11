@@ -2,7 +2,7 @@ version: "~> 1.0"
 
 import:
   - go-defaults.yml
-  - source: tag-ziti-ci.yml
+  - source: versioning.yml
     if: type != pull_request
 
 script:

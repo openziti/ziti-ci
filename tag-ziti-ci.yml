@@ -1,2 +1,0 @@
-after_success:
-  - ./tmp/ziti-ci tag -v -f "$VERSION_FILE"
