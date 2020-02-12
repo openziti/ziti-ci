@@ -7,7 +7,7 @@ import (
 
 func (env *runEnv) updateGoDependency() {
 	env.runGitCommand("Ensure origin/master is up to date", "fetch")
-	env.runGitCommand("Ensure go.mod/go.sum are untouched", "co", "--", "go.mod", "go.sum")
+	env.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	env.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
 	dep := env.getUpdatedDep()
 	env.runCommand("Update dependency", "go", "get", dep)
@@ -25,7 +25,7 @@ func (env *runEnv) updateGoDependency() {
 
 func (env *runEnv) completeGoDependencyUpdate() {
 	currentCommit := env.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
-	env.runGitCommand("Checkout master", "co", "master")
+	env.runGitCommand("Checkout master", "checkout", "master")
 	env.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
 	env.runGitCommand("Push to remote", "push")
 }
