@@ -6,6 +6,7 @@ import (
 )
 
 func (env *runEnv) updateGoDependency() {
+	env.runGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 	env.runGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
 	env.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	env.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
