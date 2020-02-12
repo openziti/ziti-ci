@@ -3,6 +3,7 @@ if: tag IS blank
 branches:
   only:
     - master
+    - update-dependency
     - /^v\d+.*/
 
 language: go

@@ -1,5 +1,3 @@
 before_install:
   - set -e
   - ziti-ci configure-git
-  - eval $(ssh-agent -s)
-  - ssh-add github_deploy_key

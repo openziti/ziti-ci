@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+	"os/user"
 	"sort"
 	"strings"
 )
@@ -69,11 +70,6 @@ func (env *runEnv) runGitCommand(description string, params ...string) {
 	}
 }
 
-func (env *runEnv) setupGitEnv(gitUsername, gitEmail string) {
-	env.runGitCommand("set git username", "config", "user.name", gitUsername)
-	env.runGitCommand("set git password", "config", "user.email", gitEmail)
-}
-
 func (env *runEnv) getCmdOutputOneLine(description string, cmd string, params ...string) string {
 	output := env.runCommandWithOutput(description, cmd, params...)
 	if len(output) != 1 {
@@ -95,9 +91,9 @@ func (env *runEnv) getGoEnv() map[string]string {
 
 func (env *runEnv) runCommandWithOutput(description string, cmd string, params ...string) []string {
 	_, _ = fmt.Fprintf(env.cmd.OutOrStderr(), "%v: %v %v\n", description, cmd, strings.Join(params, " "))
-	listTagsCmd := exec.Command(cmd, params...)
-	listTagsCmd.Stderr = os.Stderr
-	output, err := listTagsCmd.Output()
+	command := exec.Command(cmd, params...)
+	command.Stderr = os.Stderr
+	output, err := command.Output()
 	if err != nil {
 		_, _ = fmt.Fprintf(env.cmd.ErrOrStderr(), "error %v: %v\n", description, err)
 		os.Exit(-1)
@@ -112,6 +108,18 @@ func (env *runEnv) runCommandWithOutput(description string, cmd string, params .
 		}
 	}
 	return result
+}
+
+func (env *runEnv) runCommand(description string, cmd string, params ...string) {
+	_, _ = fmt.Fprintf(env.cmd.OutOrStderr(), "%v: %v %v\n", description, cmd, strings.Join(params, " "))
+	command := exec.Command(cmd, params...)
+	command.Stderr = os.Stderr
+	command.Stdout = os.Stdout
+
+	if err := command.Run(); err != nil {
+		_, _ = fmt.Fprintf(env.cmd.ErrOrStderr(), "error %v: %v\n", description, err)
+		os.Exit(-1)
+	}
 }
 
 func (env *runEnv) getVersionList(params ...string) []*version.Version {
@@ -151,4 +159,24 @@ func (env *runEnv) ensureNotAlreadyTagged() {
 		_, _ = fmt.Fprintf(env.cmd.OutOrStderr(), "head already tagged with %+v:\n", env.headTags)
 		os.Exit(0)
 	}
+}
+
+func (env *runEnv) getCurrentBranch() string {
+	branchName := env.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
+
+	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
+		branchName = val
+	} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
+		branchName = val
+	}
+	return branchName
+}
+
+func (env *runEnv) getUsername() string {
+	currUser, err := user.Current()
+	if err != nil {
+		_, _ = fmt.Fprintf(env.cmd.ErrOrStderr(), "unable to get current user %+v\n", err)
+		return "unknown"
+	}
+	return currUser.Name
 }

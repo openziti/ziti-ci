@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"strings"
 	"text/template"
 	"time"
@@ -98,6 +97,28 @@ func main() {
 	setupGitCmd.PersistentFlags().StringVar(&sshKeyFile, "ssh-key-file", DefaultSshKeyFile, "set ssh key file name")
 
 	rootCmd.AddCommand(setupGitCmd)
+
+	var updateGoDependencyCmd = &cobra.Command{
+		Use:   "update-go-dependency",
+		Short: "update-go-dependency",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			newRunEnv(cmd, args).updateGoDependency()
+		},
+	}
+
+	rootCmd.AddCommand(updateGoDependencyCmd)
+
+	var completeGoDependencyCmd = &cobra.Command{
+		Use:   "complete-update-go-dependency",
+		Short: "complete-update-go-dependency",
+		Args:  cobra.MaximumNArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			newRunEnv(cmd, args).completeGoDependencyUpdate()
+		},
+	}
+
+	rootCmd.AddCommand(completeGoDependencyCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
@@ -192,20 +213,12 @@ func generateBuildInfo(cmd *cobra.Command, args []string) {
 
 	tagVersion := fmt.Sprintf("v%v", env.nextVersion)
 
-	branchName := env.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
-
-	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
-		branchName = val
-	} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
-		branchName = val
-	}
-
 	buildInfo := &BuildInfo{
 		PackageName: args[1],
 		Version:     tagVersion,
 		Revision:    env.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD"),
-		Branch:      branchName,
-		BuildUser:   getUsername(cmd),
+		Branch:      env.getCurrentBranch(),
+		BuildUser:   env.getUsername(),
 		BuildDate:   time.Now().Format("2006-01-02 15:04:05"),
 	}
 
@@ -259,22 +272,12 @@ func getBaseVersion(cmd *cobra.Command) *version.Version {
 	return baseVersion
 }
 
-func getUsername(cmd *cobra.Command) string {
-	currUser, err := user.Current()
-	if err != nil {
-		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to get current user %+v\n", err)
-		return "unknown"
-	}
-	return currUser.Name
-}
-
 func showBuildInfo(*cobra.Command, []string) {
 	fmt.Printf("ziti-cmd version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n", Version, Revision, Branch, BuildUser, BuildDate)
 }
 
 func configureGit(cmd *cobra.Command, args []string) {
 	env := newRunEnv(cmd, args)
-	env.setupGitEnv(gitUsername, gitEmail)
 
 	if val, found := os.LookupEnv(sshKeyEnv); found && val != "" {
 		sshKey, err := base64.StdEncoding.DecodeString(val)
@@ -290,4 +293,8 @@ func configureGit(cmd *cobra.Command, args []string) {
 		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "unable to read ssh key from env var %v. Found? %v\n", sshKeyEnv, found)
 		os.Exit(-1)
 	}
+
+	env.runGitCommand("set git username", "config", "user.name", gitUsername)
+	env.runGitCommand("set git password", "config", "user.email", gitEmail)
+	env.runGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", sshKeyFile))
 }

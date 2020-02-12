@@ -12,8 +12,6 @@ script:
   - ./tmp/ziti-ci generate-build-info ziti-ci/build_info.go main
   - go build -o tmp ./...
   - ./tmp/ziti-ci configure-git
-  - eval $(ssh-agent -s)
-  - ssh-add github_deploy_key
 
 deploy:
   provider: releases
