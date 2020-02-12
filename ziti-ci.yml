@@ -1,4 +1,4 @@
 before_install:
-  - "[ -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci/ziti-ci || true"
+  - "[ -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci/ziti-ci@v0.4 || true"
   - "[ ! -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci@$ZITI_CI_VERSION || true"
   - echo $(which ziti-ci)
