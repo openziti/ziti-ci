@@ -57,7 +57,7 @@ func (cmd *updateGoDepCmd) getUpdatedDep() string {
 func newUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "update-go-dependency",
-		Short: "update-go-dependency",
+		Short: "Update a go dependency to a different version",
 		Args:  cobra.MaximumNArgs(1),
 	}
 
@@ -85,7 +85,7 @@ func (cmd *completeUpdateGoDepCmd) execute() {
 func newCompleteUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "complete-update-go-dependency",
-		Short: "complete-update-go-dependency",
+		Short: "Merge a go dependency update to master and push",
 		Args:  cobra.ExactArgs(0),
 	}
 
