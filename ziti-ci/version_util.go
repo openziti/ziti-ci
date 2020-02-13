@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+const (
+	Minor = 1
+	Patch = 2
+)
+
 func setPatch(v *version.Version, patch int) *version.Version {
 	parts := v.Segments()
 	for len(parts) < 3 {

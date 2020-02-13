@@ -2,48 +2,99 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
-func (env *runEnv) updateGoDependency() {
-	env.runGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
-	env.runGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
-	env.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
-	env.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
-	dep := env.getUpdatedDep()
-	env.runCommand("Update dependency", "go", "get", dep)
-	diffOutput := env.runCommandWithOutput("check if there's a change", "git", "diff", "--name-only", "go.mod")
+type updateGoDepCmd struct {
+	baseCommand
+}
+
+func (cmd *updateGoDepCmd) execute() {
+	cmd.runGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
+	cmd.runGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
+	cmd.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
+	cmd.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
+	dep := cmd.getUpdatedDep()
+	cmd.runCommand("Update dependency", "go", "get", dep)
+	diffOutput := cmd.runCommandWithOutput("check if there's a change", "git", "diff", "--name-only", "go.mod")
 	if len(diffOutput) != 1 || diffOutput[0] != "go.mod" {
-		_, _ = fmt.Fprintf(env.cmd.ErrOrStderr(), "requested dependency did not result in change\n")
+		_, _ = fmt.Fprintf(cmd.cmd.ErrOrStderr(), "requested dependency did not result in change\n")
 		os.Exit(-1)
 	}
-	_, _ = fmt.Fprintf(env.cmd.OutOrStdout(), "attempting to update to %v\n", dep)
+	_, _ = fmt.Fprintf(cmd.cmd.OutOrStdout(), "attempting to update to %v\n", dep)
 
-	env.runCommand("Tidy go.sum", "go", "mod", "tidy")
-	env.runGitCommand("Add go mod changes", "add", "go.mod", "go.sum")
-	env.runGitCommand("Commit go.mod changes", "commit", "-m", fmt.Sprintf("Updating dependency %v", dep))
+	cmd.runCommand("Tidy go.sum", "go", "mod", "tidy")
+	cmd.runGitCommand("Add go mod changes", "add", "go.mod", "go.sum")
+	cmd.runGitCommand("Commit go.mod changes", "commit", "-m", fmt.Sprintf("Updating dependency %v", dep))
 }
 
-func (env *runEnv) completeGoDependencyUpdate() {
-	currentCommit := env.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
-	env.runGitCommand("Checkout master", "checkout", "master")
-	env.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
-	env.runGitCommand("Push to remote", "push")
-}
-
-func (env *runEnv) getUpdatedDep() string {
+func (cmd *updateGoDepCmd) getUpdatedDep() string {
 	newDep := ""
-	if len(env.args) > 0 {
-		newDep = env.args[0]
+	if len(cmd.args) > 0 {
+		newDep = cmd.args[0]
 	}
 	if newDep == "" {
 		newDep = os.Getenv("TRAVIS_COMMIT_MESSAGE")
+		parts := strings.SplitN(newDep, " ", 1)
+		if len(parts) != 2 {
+			cmd.failf("commit message %v not a valid dependency update request: %v\n", newDep)
+		}
+		if parts[0] != "ziti-ci:update-dependency" {
+			cmd.failf("commit message %v not a valid dependency update request: %v\n", newDep)
+		}
+		newDep = parts[1]
 	}
 
 	if newDep == "" {
-		_, _ = fmt.Fprintf(env.cmd.ErrOrStderr(), "no updated dependency provided\n")
-		os.Exit(-1)
+		cmd.failf("no updated dependency provided\n")
 	}
 
 	return newDep
+}
+
+func newUpdateGoDepCmd(root *rootCommand) *cobra.Command {
+	cobraCmd := &cobra.Command{
+		Use:   "update-go-dependency",
+		Short: "update-go-dependency",
+		Args:  cobra.MaximumNArgs(1),
+	}
+
+	result := &updateGoDepCmd{
+		baseCommand: baseCommand{
+			rootCommand: root,
+			cmd:         cobraCmd,
+		},
+	}
+
+	return finalize(result)
+}
+
+type completeUpdateGoDepCmd struct {
+	baseCommand
+}
+
+func (cmd *completeUpdateGoDepCmd) execute() {
+	currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
+	cmd.runGitCommand("Checkout master", "checkout", "master")
+	cmd.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
+	cmd.runGitCommand("Push to remote", "push")
+}
+
+func newCompleteUpdateGoDepCmd(root *rootCommand) *cobra.Command {
+	cobraCmd := &cobra.Command{
+		Use:   "complete-update-go-dependency",
+		Short: "complete-update-go-dependency",
+		Args:  cobra.ExactArgs(0),
+	}
+
+	result := &completeUpdateGoDepCmd{
+		baseCommand: baseCommand{
+			rootCommand: root,
+			cmd:         cobraCmd,
+		},
+	}
+
+	return finalize(result)
 }
