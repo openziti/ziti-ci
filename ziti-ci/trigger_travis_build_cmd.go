@@ -67,6 +67,8 @@ func (cmd *triggerTravisBuidlCmd) execute() {
 		cmd.logJson(resp.Body())
 		cmd.failf("Error triggering build. REST call returned %v", resp.StatusCode())
 	}
+
+	cmd.infof("successfully triggered build of %v to update to %v\n", cmd.args[0], module)
 }
 
 func newTriggerTravisBuildCmd(root *rootCommand) *cobra.Command {
