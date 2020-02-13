@@ -54,7 +54,7 @@ func (cmd *tagCmd) execute() {
 
 func newTagCmd(root *rootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
-		Use:   "generate-build-info output-file go-package",
+		Use:   "tag",
 		Short: "Tag and push command",
 		Args:  cobra.ExactArgs(2),
 	}

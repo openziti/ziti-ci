@@ -11,7 +11,7 @@ func main() {
 	rootCobraCmd := rootCmd.rootCobraCmd
 
 	rootCobraCmd.AddCommand(newTagCmd(rootCmd))
-	rootCobraCmd.AddCommand(newBuildInfoCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGoBuildInfoCmd(rootCmd))
 	rootCobraCmd.AddCommand(newConfigureGitCmd(rootCmd))
 	rootCobraCmd.AddCommand(newUpdateGoDepCmd(rootCmd))
 	rootCobraCmd.AddCommand(newCompleteUpdateGoDepCmd(rootCmd))

@@ -16,6 +16,8 @@ type triggerTravisBuidlCmd struct {
 }
 
 func (cmd *triggerTravisBuidlCmd) execute() {
+	cmd.evalCurrentAndNextVersion()
+
 	if cmd.travisToken == "" {
 		found := false
 		cmd.travisToken, found = os.LookupEnv("travis_token")
