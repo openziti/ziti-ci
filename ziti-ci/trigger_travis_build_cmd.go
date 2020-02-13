@@ -57,7 +57,7 @@ func (cmd *triggerTravisBuidlCmd) execute() {
 		panic(err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
+	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusAccepted {
 		cmd.logJson(resp.Body())
 		cmd.failf("Error triggering build. REST call returned %v", resp.StatusCode())
 	}

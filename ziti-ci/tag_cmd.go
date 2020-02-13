@@ -56,7 +56,7 @@ func newTagCmd(root *rootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "tag",
 		Short: "Tag and push command",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(0),
 	}
 
 	result := &tagCmd{
