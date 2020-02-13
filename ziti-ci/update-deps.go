@@ -16,10 +16,14 @@ func (cmd *updateGoDepCmd) execute() {
 	cmd.runGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
 	cmd.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	cmd.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
-	output := cmd.runCommandWithOutput("Ensure we are synced", "git", "diff", "origin/master")
-	if len(output) != 0 {
-		cmd.failf("update branch has diverged from master. automated merges won't work until this is fixed. Diff: %+v", strings.Join(output, "\n"))
+
+	if !isManualCompleteProject() {
+		output := cmd.runCommandWithOutput("Ensure we are synced", "git", "diff", "origin/master")
+		if len(output) != 0 {
+			cmd.failf("update branch has diverged from master. automated merges won't work until this is fixed. Diff: %+v", strings.Join(output, "\n"))
+		}
 	}
+
 	dep := cmd.getUpdatedDep()
 	cmd.runCommand("Update dependency", "go", "get", dep)
 	diffOutput := cmd.runCommandWithOutput("check if there's a change", "git", "diff", "--name-only", "go.mod")
@@ -72,9 +76,12 @@ type completeUpdateGoDepCmd struct {
 }
 
 func (cmd *completeUpdateGoDepCmd) execute() {
-	currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
-	cmd.runGitCommand("Checkout master", "checkout", "master")
-	cmd.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
+	if !isManualCompleteProject() {
+		currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
+		cmd.runGitCommand("Checkout master", "checkout", "master")
+		cmd.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
+	}
+
 	cmd.runGitCommand("Push to remote", "push")
 }
 
@@ -93,4 +100,8 @@ func newCompleteUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 	}
 
 	return finalize(result)
+}
+
+func isManualCompleteProject() bool {
+	return "true" == os.Getenv("complete_update_dependency_manually")
 }
