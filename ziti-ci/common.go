@@ -138,7 +138,7 @@ func (cmd *baseCommand) getGoEnv() map[string]string {
 }
 
 func (cmd *baseCommand) runCommandWithOutput(description string, name string, params ...string) []string {
-	cmd.infof("%v: %v %v\n", description, cmd, strings.Join(params, " "))
+	cmd.infof("%v: %v %v\n", description, name, strings.Join(params, " "))
 	command := exec.Command(name, params...)
 	command.Stderr = os.Stderr
 	output, err := command.Output()
@@ -158,7 +158,7 @@ func (cmd *baseCommand) runCommandWithOutput(description string, name string, pa
 }
 
 func (cmd *baseCommand) runCommand(description string, name string, params ...string) {
-	cmd.infof("%v: %v %v\n", description, cmd, strings.Join(params, " "))
+	cmd.infof("%v: %v %v\n", description, name, strings.Join(params, " "))
 	command := exec.Command(name, params...)
 	command.Stderr = os.Stderr
 	command.Stdout = os.Stdout

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
-	"strings"
 )
 
 type updateGoDepCmd struct {
@@ -36,15 +35,7 @@ func (cmd *updateGoDepCmd) getUpdatedDep() string {
 		newDep = cmd.args[0]
 	}
 	if newDep == "" {
-		newDep = os.Getenv("TRAVIS_COMMIT_MESSAGE")
-		parts := strings.SplitN(newDep, " ", 1)
-		if len(parts) != 2 {
-			cmd.failf("commit message %v not a valid dependency update request: %v\n", newDep)
-		}
-		if parts[0] != "ziti-ci:update-dependency" {
-			cmd.failf("commit message %v not a valid dependency update request: %v\n", newDep)
-		}
-		newDep = parts[1]
+		newDep = os.Getenv("UPDATED_DEPENDENCY")
 	}
 
 	if newDep == "" {

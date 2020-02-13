@@ -30,13 +30,19 @@ func (cmd *triggerTravisBuidlCmd) execute() {
 		{
 			"request": {
   	  			"branch":"%v",
-      			"message": "ziti-ci:update-dependency %v"
+      			"message": "ziti-ci:update-dependency %v",
+ 				"config": {
+   					"merge_mode": "deep_merge_append",
+   					"env": {
+     					"global": ["UPDATED_DEPENDENCY=%v"]
+                    }
+				}
   			}
 		}`
 
 	branch := cmd.args[1]
 	module := fmt.Sprintf("github.com/%v@%v", os.Getenv("TRAVIS_REPO_SLUG"), cmd.currentVersion.String())
-	body := fmt.Sprintf(bodyTemplate, branch, module)
+	body := fmt.Sprintf(bodyTemplate, branch, module, module)
 
 	client := resty.New()
 
