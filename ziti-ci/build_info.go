@@ -3,9 +3,9 @@
 package main
 
 const (
-	Version   = "v0.3.11"
-	Revision  = "169c17d6f16f"
+	Version   = "v0.5.1"
+	Revision  = "c14f69f5dd6f"
 	Branch    = "v1"
-	BuildUser = "Paul Lorenz"
-	BuildDate = "2020-02-10 14:50:41"
+	BuildUser = "Travis CI User"
+	BuildDate = "2020-02-13 03:34:33"
 )
