@@ -42,13 +42,6 @@ func (cmd *tagCmd) execute() {
 	}
 	tagParms := []string{"tag", "-a", tagVersion, "-m", fmt.Sprintf("Release %v", tagVersion)}
 	cmd.runGitCommand("create tag", tagParms...)
-
-	// Ensure we're in ssh mode
-	if repoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
-		url := fmt.Sprintf("git@github.com:%v.git", repoSlug)
-		cmd.runGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
-	}
-
 	cmd.runGitCommand("push tag to repo", "push", "origin", tagVersion)
 }
 

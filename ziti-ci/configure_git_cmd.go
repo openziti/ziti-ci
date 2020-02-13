@@ -39,6 +39,12 @@ func (cmd *configureGitCmd) execute() {
 	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
 	cmd.runGitCommand("set git password", "config", "user.email", cmd.gitEmail)
 	cmd.runGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
+
+	// Ensure we're in ssh mode
+	if repoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
+		url := fmt.Sprintf("git@github.com:%v.git", repoSlug)
+		cmd.runGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
+	}
 }
 
 func newConfigureGitCmd(root *rootCommand) *cobra.Command {
