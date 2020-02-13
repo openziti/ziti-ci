@@ -11,7 +11,6 @@ import (
 
 type triggerTravisBuidlCmd struct {
 	baseCommand
-
 	travisToken string
 }
 
@@ -41,7 +40,7 @@ func (cmd *triggerTravisBuidlCmd) execute() {
 		}`
 
 	branch := cmd.args[1]
-	module := fmt.Sprintf("github.com/%v@v%v", os.Getenv("TRAVIS_REPO_SLUG"), cmd.currentVersion.String())
+	module := fmt.Sprintf("%v@v%v", cmd.getModule(), cmd.currentVersion.String())
 	body := fmt.Sprintf(bodyTemplate, branch, module, module)
 
 	client := resty.New()

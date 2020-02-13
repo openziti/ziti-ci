@@ -193,11 +193,7 @@ func (cmd *baseCommand) getVersionList(params ...string) []*version.Version {
 }
 
 func (cmd *baseCommand) getModule() string {
-	lines := cmd.runCommandWithOutput("get go module", "go", "list", "-m")
-	if len(lines) != 1 {
-		cmd.failf("failure getting go module. Output: %+v\n", lines)
-	}
-	return lines[0]
+	return cmd.getCmdOutputOneLine("get go module", "go", "list", "-m")
 }
 
 func (cmd *baseCommand) getCurrentBranch() string {
