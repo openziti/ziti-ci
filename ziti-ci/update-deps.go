@@ -76,12 +76,13 @@ type completeUpdateGoDepCmd struct {
 }
 
 func (cmd *completeUpdateGoDepCmd) execute() {
+	currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
 	if !isManualCompleteProject() {
-		currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
 		cmd.runGitCommand("Checkout master", "checkout", "master")
-		cmd.runGitCommand("Merge in update branch", "merge", "--ff-only", currentCommit)
+	} else {
+		cmd.runGitCommand("Checkout actual branch", "checkout", cmd.getCurrentBranch())
 	}
-
+	cmd.runGitCommand("Merge in changes", "merge", "--ff-only", currentCommit)
 	cmd.runGitCommand("Push to remote", "push")
 }
 
