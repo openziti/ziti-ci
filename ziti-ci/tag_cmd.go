@@ -13,9 +13,14 @@ const (
 
 type tagCmd struct {
 	baseCommand
+	onlyForBranch string
 }
 
 func (cmd *tagCmd) execute() {
+	if cmd.onlyForBranch != "" && cmd.onlyForBranch != cmd.getCurrentBranch() {
+		cmd.infof("current branch %v doesn't match requested branch %v, so skipping\n", cmd.getCurrentBranch(), cmd.onlyForBranch)
+		os.Exit(0)
+	}
 	cmd.evalCurrentAndNextVersion()
 
 	headTags := cmd.getVersionList("tag", "--points-at", "HEAD")
@@ -58,6 +63,8 @@ func newTagCmd(root *rootCommand) *cobra.Command {
 			cmd:         cobraCmd,
 		},
 	}
+
+	cobraCmd.PersistentFlags().StringVar(&result.onlyForBranch, "only-for-branch", "", "Only do if branch matches")
 
 	return finalize(result)
 }
