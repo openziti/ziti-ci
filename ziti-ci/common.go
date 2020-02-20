@@ -1,11 +1,14 @@
 package main
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -250,6 +253,52 @@ func (cmd *baseCommand) logJson(data []byte) {
 	} else {
 		if _, err := fmt.Printf("Result:\n%s\n", data); err != nil {
 			panic(err)
+		}
+	}
+}
+
+func (cmd *baseCommand) close(closer io.Closer, descripion string) {
+	if err := closer.Close(); err != nil {
+		cmd.errorf("failed to close file %v with err: %v\n", descripion, err)
+	}
+}
+
+func (cmd *baseCommand) tarGz(archiveFile string, filesToInclude ...string) {
+	outputFile, err := os.Create(archiveFile)
+	if err != nil {
+		cmd.failf("unexpected err trying to write to %v. err: %+v", archiveFile, err)
+	}
+	gzw := gzip.NewWriter(outputFile)
+	defer cmd.close(gzw, "gzip writer for "+archiveFile)
+
+	tw := tar.NewWriter(gzw)
+	defer cmd.close(tw, "tar writer for "+archiveFile)
+
+	for _, fileName := range cmd.args[1:] {
+		file, err := os.Open(fileName)
+		if err != nil {
+			cmd.failf("unexpected err trying to open file %v. err: %+v", fileName, err)
+		}
+		fileInfo, err := file.Stat()
+		if err != nil {
+			cmd.close(gzw, "source file "+fileName)
+			cmd.failf("unexpected err trying to read state file %v. err: %+v", fileName, err)
+		}
+
+		header, err := tar.FileInfoHeader(fileInfo, file.Name())
+		if err != nil {
+			cmd.close(gzw, "source file "+fileName)
+			cmd.failf("unexpected err trying to create tar header for %v. err: %+v", fileName, err)
+		}
+		if err = tw.WriteHeader(header); err != nil {
+			cmd.close(gzw, "source file "+fileName)
+			cmd.failf("unexpected err trying to write tar header for %v. err: %+v", fileName, err)
+		}
+
+		_, err = io.Copy(tw, file)
+		cmd.close(gzw, "source file "+fileName)
+		if err != nil {
+			cmd.failf("unexpected err trying to write file %v to tar file. err: %+v", fileName, err)
 		}
 	}
 }

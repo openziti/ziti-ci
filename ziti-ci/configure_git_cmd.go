@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	DefaultGitUsername  = "ziti-ci"
+	DefaultGitEmail     = "ziti-ci@netfoundry.io"
 	DefaultSshKeyEnvVar = "gh_ci_key"
 	DefaultSshKeyFile   = "github_deploy_key"
 )
@@ -61,8 +63,8 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 		},
 	}
 
-	cobraCmd.PersistentFlags().StringVar(&result.gitUsername, "git-username", "ziti-ci", "override the default git username")
-	cobraCmd.PersistentFlags().StringVar(&result.gitEmail, "git-email", "ziti-ci@netfoundry.io", "override the default git email")
+	cobraCmd.PersistentFlags().StringVar(&result.gitUsername, "git-username", DefaultGitUsername, "override the default git username")
+	cobraCmd.PersistentFlags().StringVar(&result.gitEmail, "git-email", DefaultGitEmail, "override the default git email")
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyEnv, "ssh-key-env-var", DefaultSshKeyEnvVar, "set ssh key environment variable name")
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyFile, "ssh-key-file", DefaultSshKeyFile, "set ssh key file name")
 

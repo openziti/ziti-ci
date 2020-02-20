@@ -64,6 +64,8 @@ func (cmd *goBuildInfoCmd) execute() {
 	}
 
 	cmd.runGitCommand("add build info file to git", "add", cmd.args[0])
+	cmd.runGitCommand("set git username", "config", "user.name", DefaultGitUsername)
+	cmd.runGitCommand("set git password", "config", "user.email", DefaultGitEmail)
 	cmd.runGitCommand("commit build info file", "commit", "-m", fmt.Sprintf("Release %v", tagVersion))
 }
 
