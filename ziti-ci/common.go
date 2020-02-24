@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -40,6 +41,9 @@ type baseCommand struct {
 	baseVersion    *version.Version
 	currentVersion *version.Version
 	nextVersion    *version.Version
+
+	currentBranch *string
+	buildNumber   *string
 }
 
 func (cmd *baseCommand) failf(format string, params ...interface{}) {
@@ -53,6 +57,12 @@ func (cmd *baseCommand) infof(format string, params ...interface{}) {
 
 func (cmd *baseCommand) errorf(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.cmd.OutOrStderr(), format, params...)
+}
+
+func (cmd *baseCommand) exitIfErrf(err error, format string, params ...interface{}) {
+	if err != nil {
+		cmd.failf(format, params)
+	}
 }
 
 func (cmd *baseCommand) isGoLang() bool {
@@ -200,14 +210,30 @@ func (cmd *baseCommand) getModule() string {
 }
 
 func (cmd *baseCommand) getCurrentBranch() string {
-	branchName := cmd.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
+	if cmd.currentBranch == nil {
+		branchName := ""
 
-	if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
-		branchName = val
-	} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
-		branchName = val
+		if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
+			branchName = val
+		} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
+			branchName = val
+		} else {
+			branchName = cmd.getCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
+		}
+		cmd.currentBranch = &branchName
 	}
-	return branchName
+	return *cmd.currentBranch
+}
+
+func (cmd *baseCommand) getBuildNumber() string {
+	if cmd.buildNumber == nil {
+		buildNumber := "0"
+		if val, found := os.LookupEnv("TRAVIS_BUILD_NUMBER"); found && val != "" {
+			buildNumber = val
+		}
+		cmd.buildNumber = &buildNumber
+	}
+	return *cmd.buildNumber
 }
 
 func (cmd *baseCommand) getUsername() string {
@@ -263,10 +289,27 @@ func (cmd *baseCommand) close(closer io.Closer, descripion string) {
 	}
 }
 
-func (cmd *baseCommand) tarGz(archiveFile string, filesToInclude ...string) {
+func (cmd *baseCommand) tarGzSimple(archiveFile string, filesToInclude ...string) {
+	nameMap := map[string]string{}
+	for _, file := range filesToInclude {
+		_, fileName := filepath.Split(file)
+		nameMap[file] = fileName
+	}
+	cmd.tarGz(archiveFile, nameMap)
+}
+
+func (cmd *baseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifact) {
+	nameMap := map[string]string{}
+	for _, artifact := range artifacts {
+		nameMap[artifact.artifactPath] = fmt.Sprintf("%v/%v/%v", artifact.arch, artifact.os, artifact.artifactArchive)
+	}
+	cmd.tarGz(archiveFile, nameMap)
+}
+
+func (cmd *baseCommand) tarGz(archiveFile string, nameMap map[string]string) {
 	outputFile, err := os.Create(archiveFile)
 	if err != nil {
-		cmd.failf("unexpected err trying to write to %v. err: %+v", archiveFile, err)
+		cmd.failf("unexpected err trying to write to %v. err: %+v\n", archiveFile, err)
 	}
 	gzw := gzip.NewWriter(outputFile)
 	defer cmd.close(gzw, "gzip writer for "+archiveFile)
@@ -274,31 +317,32 @@ func (cmd *baseCommand) tarGz(archiveFile string, filesToInclude ...string) {
 	tw := tar.NewWriter(gzw)
 	defer cmd.close(tw, "tar writer for "+archiveFile)
 
-	for _, fileName := range cmd.args[1:] {
-		file, err := os.Open(fileName)
+	for filePath, name := range nameMap {
+		file, err := os.Open(filePath)
 		if err != nil {
-			cmd.failf("unexpected err trying to open file %v. err: %+v", fileName, err)
+			cmd.failf("unexpected err trying to open file %v. err: %+v\n", filePath, err)
 		}
 		fileInfo, err := file.Stat()
 		if err != nil {
-			cmd.close(gzw, "source file "+fileName)
-			cmd.failf("unexpected err trying to read state file %v. err: %+v", fileName, err)
+			cmd.close(gzw, "source file "+filePath)
+			cmd.failf("unexpected err trying to read state file %v. err: %+v\n", filePath, err)
 		}
 
-		header, err := tar.FileInfoHeader(fileInfo, file.Name())
+		header, err := tar.FileInfoHeader(fileInfo, "")
 		if err != nil {
-			cmd.close(gzw, "source file "+fileName)
-			cmd.failf("unexpected err trying to create tar header for %v. err: %+v", fileName, err)
+			cmd.close(gzw, "source file "+filePath)
+			cmd.failf("unexpected err trying to create tar header for %v. err: %+v\n", filePath, err)
 		}
+		header.Name = name
 		if err = tw.WriteHeader(header); err != nil {
-			cmd.close(gzw, "source file "+fileName)
-			cmd.failf("unexpected err trying to write tar header for %v. err: %+v", fileName, err)
+			cmd.close(gzw, "source file "+filePath)
+			cmd.failf("unexpected err trying to write tar header for %v. err: %+v\n", filePath, err)
 		}
 
 		_, err = io.Copy(tw, file)
-		cmd.close(gzw, "source file "+fileName)
+		cmd.close(file, "source file "+filePath)
 		if err != nil {
-			cmd.failf("unexpected err trying to write file %v to tar file. err: %+v", fileName, err)
+			cmd.failf("unexpected err trying to write file %v to tar file. err: %+v\n", filePath, err)
 		}
 	}
 }

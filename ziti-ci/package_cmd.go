@@ -9,7 +9,7 @@ type packageCmd struct {
 }
 
 func (cmd *packageCmd) execute() {
-	cmd.tarGz(cmd.args[0], cmd.args[1:]...)
+	cmd.tarGzSimple(cmd.args[0], cmd.args[1:]...)
 }
 
 func newPackageCmd(root *rootCommand) *cobra.Command {

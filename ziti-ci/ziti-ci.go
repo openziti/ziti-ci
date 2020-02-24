@@ -17,6 +17,7 @@ func main() {
 	rootCobraCmd.AddCommand(newCompleteUpdateGoDepCmd(rootCmd))
 	rootCobraCmd.AddCommand(newTriggerTravisBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
+	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",

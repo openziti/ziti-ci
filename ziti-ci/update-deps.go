@@ -15,9 +15,10 @@ func (cmd *updateGoDepCmd) execute() {
 	cmd.runGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 	cmd.runGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
 	cmd.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
-	cmd.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
 
 	if !isManualCompleteProject() {
+		cmd.runGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
+
 		output := cmd.runCommandWithOutput("Ensure we are synced", "git", "diff", "origin/master")
 		if len(output) != 0 {
 			cmd.failf("update branch has diverged from master. automated merges won't work until this is fixed. Diff: %+v", strings.Join(output, "\n"))
@@ -76,6 +77,8 @@ type completeUpdateGoDepCmd struct {
 }
 
 func (cmd *completeUpdateGoDepCmd) execute() {
+	// go get gox or go get jfrog can mess with go.mod since we committed
+	cmd.runGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	currentCommit := cmd.getCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
 	if !isManualCompleteProject() {
 		cmd.runGitCommand("Checkout master", "checkout", "master")
