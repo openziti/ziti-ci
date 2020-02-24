@@ -15,6 +15,7 @@ func main() {
 	rootCobraCmd.AddCommand(newConfigureGitCmd(rootCmd))
 	rootCobraCmd.AddCommand(newUpdateGoDepCmd(rootCmd))
 	rootCobraCmd.AddCommand(newCompleteUpdateGoDepCmd(rootCmd))
+	rootCobraCmd.AddCommand(newTriggerJenkinsBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newTriggerTravisBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
