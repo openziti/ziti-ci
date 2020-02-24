@@ -22,3 +22,4 @@ deploy:
   on:
     repo: netfoundry/ziti-ci
     branch: v1
+
