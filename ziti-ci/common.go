@@ -176,6 +176,10 @@ func (cmd *baseCommand) runCommand(description string, name string, params ...st
 	command.Stderr = os.Stderr
 	command.Stdout = os.Stdout
 
+	if name == "jfrog" {
+		command.Env = append(command.Env, "JFROG_CLI_OFFER_CONFIG=false")
+	}
+
 	if err := command.Run(); err != nil {
 		cmd.failf("error %v: %v\n", description, err)
 	}
