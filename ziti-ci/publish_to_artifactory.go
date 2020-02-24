@@ -55,13 +55,17 @@ func (cmd *publishToArtifactoryCmd) execute() {
 
 				for _, releasableFile := range releasableFiles {
 					if !releasableFile.IsDir() && !strings.HasSuffix(releasableFile.Name(), ".gz") {
+						name := releasableFile.Name()
+						if strings.HasSuffix(name, ".exe") {
+							name = strings.TrimSuffix(name, ".exe")
+						}
 						filePath := filepath.Join(osDirPath, releasableFile.Name())
-						destPath := filePath + ".tar.gz"
+						destPath := filepath.Join(osDirPath, name+".tar.gz")
 						cmd.infof("packaging releasable: %v -> %v\n", filePath, destPath)
-						cmd.tarGzSimple(filePath+".tar.gz", filePath)
+						cmd.tarGzSimple(destPath, filePath)
 						artifacts = append(artifacts, &artifact{
-							name:            releasableFile.Name(),
-							artifactArchive: releasableFile.Name() + ".tar.gz",
+							name:            name,
+							artifactArchive: name + ".tar.gz",
 							artifactPath:    destPath,
 							arch:            arch,
 							os:              os,
