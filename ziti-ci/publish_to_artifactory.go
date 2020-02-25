@@ -79,17 +79,22 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	zitiAllPath := "release/ziti-all.tar.gz"
 	cmd.tarGzArtifacts(zitiAllPath, artifacts...)
 
+	version := cmd.currentVersion.String()
+	if cmd.getCurrentBranch() != "master" {
+		version = fmt.Sprintf("%v-%v", cmd.currentVersion, cmd.getBuildNumber())
+	}
+
 	for _, artifact := range artifacts {
 		dest := ""
 		// if release branch, publish to staging, otherwise to snapshot
 		if cmd.getCurrentBranch() == "master" {
 			dest = fmt.Sprintf("ziti-staging/%v/%v/%v/%v/%v",
-				artifact.name, artifact.arch, artifact.os, cmd.currentVersion.String(), artifact.artifactArchive)
+				artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
 		} else {
-			dest = fmt.Sprintf("ziti-snapshot/%v/%v/%v/%v/%v-%v/%v",
-				cmd.getCurrentBranch(), artifact.name, artifact.arch, artifact.os, cmd.currentVersion.String(), cmd.getBuildNumber(), artifact.artifactArchive)
+			dest = fmt.Sprintf("ziti-snapshot/%v/%v/%v/%v/%v/%v",
+				cmd.getCurrentBranch(), artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
 		}
-		props := fmt.Sprintf("version=%v;name=%v;arch=%v;os=%v;branch=%v", cmd.currentVersion, artifact.name, artifact.arch, artifact.os, cmd.getCurrentBranch())
+		props := fmt.Sprintf("version=%v;name=%v;arch=%v;os=%v;branch=%v", version, artifact.name, artifact.arch, artifact.os, cmd.getCurrentBranch())
 		cmd.runCommand(fmt.Sprintf("Publish artifact for %v", artifact.name),
 			"jfrog", "rt", "u", artifact.artifactPath, dest,
 			"--apikey", jfrogApiKey,
@@ -100,8 +105,8 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	}
 
 	if cmd.getCurrentBranch() == "master" {
-		dest := fmt.Sprintf("ziti-staging/ziti-all/%v/ziti-all.%v.tar.gz", cmd.currentVersion, cmd.currentVersion)
-		props := fmt.Sprintf("version=%v;branch=%v", cmd.currentVersion, cmd.getCurrentBranch())
+		dest := fmt.Sprintf("ziti-staging/ziti-all/%v/ziti-all.%v.tar.gz", version, version)
+		props := fmt.Sprintf("version=%v;branch=%v", version, cmd.getCurrentBranch())
 		cmd.runCommand("Publish artifact for ziti-all",
 			"jfrog", "rt", "u", zitiAllPath, dest,
 			"--apikey", jfrogApiKey,
@@ -109,7 +114,6 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--props", props,
 			"--build-name=ziti",
 			"--build-number="+cmd.currentVersion.String())
-
 	}
 }
 
