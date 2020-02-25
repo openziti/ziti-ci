@@ -241,11 +241,7 @@ func (cmd *baseCommand) getBuildNumber() string {
 }
 
 func (cmd *baseCommand) getCommitterEmail() string {
-	commit := os.Getenv("TRAVIS_COMMIT")
-	if commit == "" {
-		commit = "HEAD"
-	}
-	return cmd.getCmdOutputOneLine("get committer e-mail address", "git", "log", "-1", commit, "--pretty=%cE")
+	return cmd.getCmdOutputOneLine("get committer e-mail address", "git", "log", "-1", "FETCH_HEAD", "--pretty=%cE")
 }
 
 func (cmd *baseCommand) getUsername() string {
