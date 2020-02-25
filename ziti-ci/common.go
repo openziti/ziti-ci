@@ -118,6 +118,7 @@ func (cmd *baseCommand) evalCurrentAndNextVersion() {
 	if cmd.nextVersion.LessThan(cmd.baseVersion) {
 		cmd.nextVersion = cmd.baseVersion
 	}
+	fmt.Printf("current version: %v, next version: %v\n", cmd.currentVersion, cmd.nextVersion)
 }
 
 func (cmd *baseCommand) runGitCommand(description string, params ...string) {
