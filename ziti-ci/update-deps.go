@@ -30,7 +30,7 @@ func (cmd *updateGoDepCmd) execute() {
 	diffOutput := cmd.runCommandWithOutput("check if there's a change", "git", "diff", "--name-only", "go.mod")
 	if len(diffOutput) != 1 || diffOutput[0] != "go.mod" {
 		_, _ = fmt.Fprintf(cmd.cmd.ErrOrStderr(), "requested dependency did not result in change\n")
-		os.Exit(-1)
+		os.Exit(0)
 	}
 	_, _ = fmt.Fprintf(cmd.cmd.OutOrStdout(), "attempting to update to %v\n", dep)
 
