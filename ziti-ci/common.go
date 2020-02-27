@@ -69,6 +69,13 @@ func (cmd *baseCommand) isGoLang() bool {
 	return cmd.lang == LangGo
 }
 
+func (cmd *baseCommand) getPublishVersion() *version.Version {
+	if cmd.currentVersion == nil {
+		return cmd.nextVersion
+	}
+	return cmd.currentVersion
+}
+
 func (cmd *baseCommand) setLangType() {
 	if cmd.langName == "" {
 		return

@@ -85,13 +85,9 @@ func (cmd *publishToArtifactoryCmd) execute() {
 
 	// When rolling minor/major numbers the current version will be nil, so use the next version instead
 	// This will only happen when publishing a PR
-	version := cmd.nextVersion.String()
-	if cmd.currentVersion != nil {
-		version = cmd.currentVersion.String()
-	}
-
+	version := cmd.getPublishVersion().String()
 	if cmd.getCurrentBranch() != "master" {
-		version = fmt.Sprintf("%v-%v", cmd.currentVersion, cmd.getBuildNumber())
+		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
 	for _, artifact := range artifacts {
@@ -111,7 +107,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
 			"--build-name=ziti",
-			"--build-number="+cmd.currentVersion.String())
+			"--build-number="+cmd.getPublishVersion().String())
 	}
 
 	if cmd.getCurrentBranch() == "master" {
@@ -123,7 +119,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
 			"--build-name=ziti",
-			"--build-number="+cmd.currentVersion.String())
+			"--build-number="+cmd.getPublishVersion().String())
 	}
 }
 
