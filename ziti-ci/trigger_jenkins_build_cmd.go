@@ -44,7 +44,7 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 
 	client := resty.New()
 
-	targetVersion := fmt.Sprintf("%v-%v", cmd.currentVersion, cmd.getBuildNumber())
+	targetVersion := fmt.Sprintf("%v-%v", cmd.getPublishVersion(), cmd.getBuildNumber())
 	resp, err := client.R().
 		EnableTrace().
 		SetQueryParam("token", cmd.jenkinsJobToken).
