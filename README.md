@@ -1,2 +1,2 @@
-# ziti-ci-golang
-Shared infrastrure code for Ziti Golang projects
+# ziti-ci
+Shared CI for Ziti projects
