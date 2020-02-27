@@ -16,6 +16,8 @@ type publishToArtifactoryCmd struct {
 type artifact struct {
 	name            string
 	artifactArchive string
+	sourceName      string
+	sourcePath      string
 	artifactPath    string
 	arch            string
 	os              string
@@ -65,6 +67,8 @@ func (cmd *publishToArtifactoryCmd) execute() {
 						cmd.tarGzSimple(destPath, filePath)
 						artifacts = append(artifacts, &artifact{
 							name:            name,
+							sourceName:      releasableFile.Name(),
+							sourcePath:      filePath,
 							artifactArchive: name + ".tar.gz",
 							artifactPath:    destPath,
 							arch:            arch,
@@ -79,7 +83,13 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	zitiAllPath := "release/ziti-all.tar.gz"
 	cmd.tarGzArtifacts(zitiAllPath, artifacts...)
 
-	version := cmd.currentVersion.String()
+	// When rolling minor/major numbers the current version will be nil, so use the next version instead
+	// This will only happen when publishing a PR
+	version := cmd.nextVersion.String()
+	if cmd.currentVersion != nil {
+		version = cmd.currentVersion.String()
+	}
+
 	if cmd.getCurrentBranch() != "master" {
 		version = fmt.Sprintf("%v-%v", cmd.currentVersion, cmd.getBuildNumber())
 	}
