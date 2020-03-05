@@ -120,6 +120,10 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--props", props,
 			"--build-name=ziti",
 			"--build-number="+cmd.getPublishVersion().String())
+
+		cmd.runCommand("Set build version", "jfrog", "rt", "bce", "ziti", version)
+		cmd.runCommand("Create build in Artifactory", "jfrog", "rt", "bp",
+			"--apikey", jfrogApiKey, "--url", "https://netfoundry.jfrog.io/netfoundry", "ziti", version)
 	}
 }
 
