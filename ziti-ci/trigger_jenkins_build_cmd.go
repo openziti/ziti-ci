@@ -69,7 +69,7 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 		cmd.failf("Error triggering build. REST call returned %v", resp.StatusCode())
 	}
 
-	cmd.infof("successfully triggered build of ziti-smoke-test for branch: %v, version: %v\n", cmd.getCurrentBranch(), targetVersion)
+	cmd.infof("successfully triggered build of ziti-smoke-test for branch: %v, version: %v\n", cmd.getCurrentBranch(), version)
 }
 
 func newTriggerJenkinsBuildCmd(root *rootCommand) *cobra.Command {
