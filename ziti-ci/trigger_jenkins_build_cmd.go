@@ -44,12 +44,16 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 
 	client := resty.New()
 
-	targetVersion := fmt.Sprintf("%v-%v", cmd.getPublishVersion(), cmd.getBuildNumber())
+	version := cmd.getPublishVersion().String()
+	if cmd.getCurrentBranch() != "master" {
+		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
+	}
+
 	resp, err := client.R().
 		EnableTrace().
 		SetQueryParam("token", cmd.jenkinsJobToken).
 		SetQueryParam("branch", cmd.getCurrentBranch()).
-		SetQueryParam("version", targetVersion).
+		SetQueryParam("version", version).
 		SetQueryParam("committer", cmd.getCommitterEmail()).
 		SetQueryParam("cause", fmt.Sprintf("triggered by Travis ziti-cmd build #%v", cmd.getBuildNumber())).
 		SetBasicAuth(cmd.jenkinsUser, cmd.jenkinsUserToken).
