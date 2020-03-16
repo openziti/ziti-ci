@@ -69,6 +69,13 @@ func (cmd *baseCommand) isGoLang() bool {
 	return cmd.lang == LangGo
 }
 
+func (cmd *baseCommand) getPublishVersion() *version.Version {
+	if cmd.currentVersion == nil {
+		return cmd.nextVersion
+	}
+	return cmd.currentVersion
+}
+
 func (cmd *baseCommand) setLangType() {
 	if cmd.langName == "" {
 		return
@@ -91,7 +98,7 @@ func (cmd *baseCommand) getCobraCmd() *cobra.Command {
 }
 
 func (cmd *baseCommand) evalCurrentAndNextVersion() {
-	cmd.runGitCommand("fetching git tags", "fetch", "--tags")
+	cmd.runGitCommandAlways("fetching git tags", "fetch", "--tags")
 	versions := cmd.getVersionList("tag", "--list")
 
 	min := setPatch(cmd.baseVersion, 0)
@@ -122,8 +129,16 @@ func (cmd *baseCommand) evalCurrentAndNextVersion() {
 }
 
 func (cmd *baseCommand) runGitCommand(description string, params ...string) {
+	cmd.runGitCommandOptional(description, cmd.dryRun, params...)
+}
+
+func (cmd *baseCommand) runGitCommandAlways(description string, params ...string) {
+	cmd.runGitCommandOptional(description, false, params...)
+}
+
+func (cmd *baseCommand) runGitCommandOptional(description string, dryRun bool, params ...string) {
 	cmd.infof("%v: git %v \n", description, strings.Join(params, " "))
-	if !cmd.dryRun {
+	if !dryRun {
 		gitCmd := exec.Command("git", params...)
 		gitCmd.Stderr = os.Stderr
 		gitCmd.Stdout = os.Stdout
@@ -181,8 +196,10 @@ func (cmd *baseCommand) runCommand(description string, name string, params ...st
 		command.Env = append(command.Env, "JFROG_CLI_OFFER_CONFIG=false")
 	}
 
-	if err := command.Run(); err != nil {
-		cmd.failf("error %v: %v\n", description, err)
+	if name != "jfrog" || !cmd.dryRun {
+		if err := command.Run(); err != nil {
+			cmd.failf("error %v: %v\n", description, err)
+		}
 	}
 }
 
@@ -310,7 +327,7 @@ func (cmd *baseCommand) tarGzSimple(archiveFile string, filesToInclude ...string
 func (cmd *baseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifact) {
 	nameMap := map[string]string{}
 	for _, artifact := range artifacts {
-		nameMap[artifact.artifactPath] = fmt.Sprintf("%v/%v/%v", artifact.arch, artifact.os, artifact.artifactArchive)
+		nameMap[artifact.sourcePath] = fmt.Sprintf("%v/%v/%v", artifact.arch, artifact.os, artifact.sourceName)
 	}
 	cmd.tarGz(archiveFile, nameMap)
 }

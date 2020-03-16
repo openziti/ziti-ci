@@ -16,6 +16,8 @@ type publishToArtifactoryCmd struct {
 type artifact struct {
 	name            string
 	artifactArchive string
+	sourceName      string
+	sourcePath      string
 	artifactPath    string
 	arch            string
 	os              string
@@ -65,6 +67,8 @@ func (cmd *publishToArtifactoryCmd) execute() {
 						cmd.tarGzSimple(destPath, filePath)
 						artifacts = append(artifacts, &artifact{
 							name:            name,
+							sourceName:      releasableFile.Name(),
+							sourcePath:      filePath,
 							artifactArchive: name + ".tar.gz",
 							artifactPath:    destPath,
 							arch:            arch,
@@ -79,9 +83,11 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	zitiAllPath := "release/ziti-all.tar.gz"
 	cmd.tarGzArtifacts(zitiAllPath, artifacts...)
 
-	version := cmd.currentVersion.String()
+	// When rolling minor/major numbers the current version will be nil, so use the next version instead
+	// This will only happen when publishing a PR
+	version := cmd.getPublishVersion().String()
 	if cmd.getCurrentBranch() != "master" {
-		version = fmt.Sprintf("%v-%v", cmd.currentVersion, cmd.getBuildNumber())
+		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
 	for _, artifact := range artifacts {
@@ -101,7 +107,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
 			"--build-name=ziti",
-			"--build-number="+cmd.currentVersion.String())
+			"--build-number="+cmd.getPublishVersion().String())
 	}
 
 	if cmd.getCurrentBranch() == "master" {
@@ -113,7 +119,11 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
 			"--build-name=ziti",
-			"--build-number="+cmd.currentVersion.String())
+			"--build-number="+cmd.getPublishVersion().String())
+
+		cmd.runCommand("Set build version", "jfrog", "rt", "bce", "ziti", version)
+		cmd.runCommand("Create build in Artifactory", "jfrog", "rt", "bp",
+			"--apikey", jfrogApiKey, "--url", "https://netfoundry.jfrog.io/netfoundry", "ziti", version)
 	}
 }
 
