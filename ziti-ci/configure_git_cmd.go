@@ -55,6 +55,17 @@ func (cmd *configureGitCmd) execute() {
 		cmd.failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
 	}
 
+	//add the deploy key to .gitignore...
+	f, err := os.OpenFile(".gitignore",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		cmd.failf("could not write to .gitignore", err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(DefaultSshKeyFile + "\n"); err != nil {
+		cmd.failf("error writing to .gitignore", err)
+	}
+
 	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
 	cmd.runGitCommand("set git password", "config", "user.email", cmd.gitEmail)
 	cmd.runGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
