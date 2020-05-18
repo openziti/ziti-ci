@@ -1,3 +1,20 @@
+/*
+ * Copyright NetFoundry, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 package main
 
 import (
@@ -36,6 +53,17 @@ func (cmd *configureGitCmd) execute() {
 		}
 	} else {
 		cmd.failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
+	}
+
+	//add the deploy key to .gitignore...
+	f, err := os.OpenFile(".gitignore",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		cmd.failf("could not write to .gitignore", err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(DefaultSshKeyFile + "\n"); err != nil {
+		cmd.failf("error writing to .gitignore", err)
 	}
 
 	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
