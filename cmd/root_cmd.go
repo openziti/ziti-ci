@@ -75,6 +75,17 @@ func newRootCommand() *rootCommand {
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
 
+	var versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: "Show build information",
+		Args:  cobra.ExactArgs(0),
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("ziti-cmd version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n",
+				Version, Revision, Branch, BuildUser, BuildDate)
+		},
+	}
+
+	rootCobraCmd.AddCommand(versionCmd)
 	return rootCmd
 }
 
