@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -26,7 +26,7 @@ import (
 )
 
 type triggerJenkinsSmokeBuildCmd struct {
-	baseCommand
+	BaseCommand
 	jenkinsUser      string
 	jenkinsUserToken string
 	jenkinsJobToken  string
@@ -97,7 +97,7 @@ func newTriggerJenkinsBuildCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &triggerJenkinsSmokeBuildCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

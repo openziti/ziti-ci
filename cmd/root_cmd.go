@@ -15,10 +15,13 @@
  *
  */
 
-package main
+package cmd
 
 import (
+	"fmt"
+	"github.com/netfoundry/ziti-ci/cmd/publish"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 type langType int
@@ -27,8 +30,10 @@ const (
 	LangGo langType = 1
 )
 
+var	RootCmd = newRootCommand()
+
 type rootCommand struct {
-	rootCobraCmd *cobra.Command
+	RootCobraCmd *cobra.Command
 
 	verbose bool
 	dryRun  bool
@@ -47,7 +52,7 @@ func newRootCommand() *rootCommand {
 	}
 
 	var rootCmd = &rootCommand{
-		rootCobraCmd: cobraCmd,
+		RootCobraCmd: cobraCmd,
 	}
 
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.verbose, "verbose", "v", false, "enable verbose output")
@@ -57,5 +62,25 @@ func newRootCommand() *rootCommand {
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionString, "base-version", "b", "", "set base version")
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")
 
+	rootCobraCmd := rootCmd.RootCobraCmd
+
+	rootCobraCmd.AddCommand(newTagCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGoBuildInfoCmd(rootCmd))
+	rootCobraCmd.AddCommand(newConfigureGitCmd(rootCmd))
+	rootCobraCmd.AddCommand(newUpdateGoDepCmd(rootCmd))
+	rootCobraCmd.AddCommand(newCompleteUpdateGoDepCmd(rootCmd))
+	rootCobraCmd.AddCommand(newTriggerJenkinsBuildCmd(rootCmd))
+	rootCobraCmd.AddCommand(newTriggerTravisBuildCmd(rootCmd))
+	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
+	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
+	rootCobraCmd.AddCommand(publish.NewPublishCmd())
+
 	return rootCmd
+}
+
+func(r *rootCommand) Execute() {
+	if err := r.RootCobraCmd.Execute(); err != nil {
+		fmt.Printf("error: %s\n", err)
+		os.Exit(1)
+	}
 }

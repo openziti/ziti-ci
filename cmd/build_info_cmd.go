@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ type GoBuildInfo struct {
 }
 
 type goBuildInfoCmd struct {
-	baseCommand
+	BaseCommand
 }
 
 func (cmd *goBuildInfoCmd) execute() {
@@ -94,7 +94,7 @@ func newGoBuildInfoCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &goBuildInfoCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

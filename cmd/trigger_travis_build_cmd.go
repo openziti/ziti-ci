@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ import (
 )
 
 type triggerTravisBuidlCmd struct {
-	baseCommand
+	BaseCommand
 	travisToken string
 }
 
@@ -95,7 +95,7 @@ func newTriggerTravisBuildCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &triggerTravisBuidlCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

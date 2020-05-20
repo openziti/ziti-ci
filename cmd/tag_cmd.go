@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -29,7 +29,7 @@ const (
 )
 
 type tagCmd struct {
-	baseCommand
+	BaseCommand
 	onlyForBranch string
 }
 
@@ -75,7 +75,7 @@ func newTagCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &tagCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

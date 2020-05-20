@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"archive/tar"
@@ -49,7 +49,7 @@ func finalize(cmd ciCmd) *cobra.Command {
 	return cmd.getCobraCmd()
 }
 
-type baseCommand struct {
+type BaseCommand struct {
 	*rootCommand
 
 	cmd  *cobra.Command
@@ -63,37 +63,37 @@ type baseCommand struct {
 	buildNumber   *string
 }
 
-func (cmd *baseCommand) failf(format string, params ...interface{}) {
+func (cmd *BaseCommand) failf(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.cmd.ErrOrStderr(), format, params...)
 	os.Exit(1)
 }
 
-func (cmd *baseCommand) infof(format string, params ...interface{}) {
+func (cmd *BaseCommand) infof(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.cmd.OutOrStdout(), format, params...)
 }
 
-func (cmd *baseCommand) errorf(format string, params ...interface{}) {
+func (cmd *BaseCommand) errorf(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.cmd.OutOrStderr(), format, params...)
 }
 
-func (cmd *baseCommand) exitIfErrf(err error, format string, params ...interface{}) {
+func (cmd *BaseCommand) exitIfErrf(err error, format string, params ...interface{}) {
 	if err != nil {
 		cmd.failf(format, params)
 	}
 }
 
-func (cmd *baseCommand) isGoLang() bool {
+func (cmd *BaseCommand) isGoLang() bool {
 	return cmd.lang == LangGo
 }
 
-func (cmd *baseCommand) getPublishVersion() *version.Version {
+func (cmd *BaseCommand) getPublishVersion() *version.Version {
 	if cmd.currentVersion == nil {
 		return cmd.nextVersion
 	}
 	return cmd.currentVersion
 }
 
-func (cmd *baseCommand) setLangType() {
+func (cmd *BaseCommand) setLangType() {
 	if cmd.langName == "" {
 		return
 	}
@@ -104,17 +104,17 @@ func (cmd *baseCommand) setLangType() {
 	}
 }
 
-func (cmd *baseCommand) init(args []string) {
+func (cmd *BaseCommand) init(args []string) {
 	cmd.args = args
 	cmd.setLangType()
 	cmd.baseVersion = cmd.getBaseVersion()
 }
 
-func (cmd *baseCommand) getCobraCmd() *cobra.Command {
+func (cmd *BaseCommand) getCobraCmd() *cobra.Command {
 	return cmd.cmd
 }
 
-func (cmd *baseCommand) evalCurrentAndNextVersion() {
+func (cmd *BaseCommand) evalCurrentAndNextVersion() {
 	cmd.runGitCommandAlways("fetching git tags", "fetch", "--tags")
 	versions := cmd.getVersionList("tag", "--list")
 
@@ -145,15 +145,15 @@ func (cmd *baseCommand) evalCurrentAndNextVersion() {
 	fmt.Printf("current version: %v, next version: %v\n", cmd.currentVersion, cmd.nextVersion)
 }
 
-func (cmd *baseCommand) runGitCommand(description string, params ...string) {
+func (cmd *BaseCommand) runGitCommand(description string, params ...string) {
 	cmd.runGitCommandOptional(description, cmd.dryRun, params...)
 }
 
-func (cmd *baseCommand) runGitCommandAlways(description string, params ...string) {
+func (cmd *BaseCommand) runGitCommandAlways(description string, params ...string) {
 	cmd.runGitCommandOptional(description, false, params...)
 }
 
-func (cmd *baseCommand) runGitCommandOptional(description string, dryRun bool, params ...string) {
+func (cmd *BaseCommand) runGitCommandOptional(description string, dryRun bool, params ...string) {
 	cmd.infof("%v: git %v \n", description, strings.Join(params, " "))
 	if !dryRun {
 		gitCmd := exec.Command("git", params...)
@@ -165,7 +165,7 @@ func (cmd *baseCommand) runGitCommandOptional(description string, dryRun bool, p
 	}
 }
 
-func (cmd *baseCommand) getCmdOutputOneLine(description string, name string, params ...string) string {
+func (cmd *BaseCommand) getCmdOutputOneLine(description string, name string, params ...string) string {
 	output := cmd.runCommandWithOutput(description, name, params...)
 	if len(output) != 1 {
 		cmd.failf("expected 1 line return from %v: %v %v, but got %v\n", description, cmd, strings.Join(params, " "), len(output))
@@ -173,7 +173,7 @@ func (cmd *baseCommand) getCmdOutputOneLine(description string, name string, par
 	return output[0]
 }
 
-func (cmd *baseCommand) getGoEnv() map[string]string {
+func (cmd *BaseCommand) getGoEnv() map[string]string {
 	lines := cmd.runCommandWithOutput("get go environment", "go", "env", "-json")
 	result := map[string]string{}
 	err := json.Unmarshal([]byte(strings.Join(lines, "\n")), &result)
@@ -183,7 +183,7 @@ func (cmd *baseCommand) getGoEnv() map[string]string {
 	return result
 }
 
-func (cmd *baseCommand) runCommandWithOutput(description string, name string, params ...string) []string {
+func (cmd *BaseCommand) runCommandWithOutput(description string, name string, params ...string) []string {
 	cmd.infof("%v: %v %v\n", description, name, strings.Join(params, " "))
 	command := exec.Command(name, params...)
 	command.Stderr = os.Stderr
@@ -203,7 +203,7 @@ func (cmd *baseCommand) runCommandWithOutput(description string, name string, pa
 	return result
 }
 
-func (cmd *baseCommand) runCommand(description string, name string, params ...string) {
+func (cmd *BaseCommand) runCommand(description string, name string, params ...string) {
 	cmd.infof("%v: %v %v\n", description, name, strings.Join(params, " "))
 	command := exec.Command(name, params...)
 	command.Stderr = os.Stderr
@@ -220,7 +220,7 @@ func (cmd *baseCommand) runCommand(description string, name string, params ...st
 	}
 }
 
-func (cmd *baseCommand) getVersionList(params ...string) []*version.Version {
+func (cmd *BaseCommand) getVersionList(params ...string) []*version.Version {
 	lines := cmd.runCommandWithOutput("list git tags", "git", params...)
 
 	var versions []*version.Version
@@ -244,11 +244,11 @@ func (cmd *baseCommand) getVersionList(params ...string) []*version.Version {
 	return versions
 }
 
-func (cmd *baseCommand) getModule() string {
+func (cmd *BaseCommand) getModule() string {
 	return cmd.getCmdOutputOneLine("get go module", "go", "list", "-m")
 }
 
-func (cmd *baseCommand) getCurrentBranch() string {
+func (cmd *BaseCommand) getCurrentBranch() string {
 	if cmd.currentBranch == nil {
 		branchName := ""
 
@@ -264,7 +264,7 @@ func (cmd *baseCommand) getCurrentBranch() string {
 	return *cmd.currentBranch
 }
 
-func (cmd *baseCommand) getBuildNumber() string {
+func (cmd *BaseCommand) getBuildNumber() string {
 	if cmd.buildNumber == nil {
 		buildNumber := "0"
 		if val, found := os.LookupEnv("TRAVIS_BUILD_NUMBER"); found && val != "" {
@@ -275,11 +275,11 @@ func (cmd *baseCommand) getBuildNumber() string {
 	return *cmd.buildNumber
 }
 
-func (cmd *baseCommand) getCommitterEmail() string {
+func (cmd *BaseCommand) getCommitterEmail() string {
 	return cmd.getCmdOutputOneLine("get committer e-mail address", "git", "log", "-1", "FETCH_HEAD", "--pretty=%cE")
 }
 
-func (cmd *baseCommand) getUsername() string {
+func (cmd *BaseCommand) getUsername() string {
 	currUser, err := user.Current()
 	if err != nil {
 		cmd.errorf("unable to get current user %+v\n", err)
@@ -288,7 +288,7 @@ func (cmd *baseCommand) getUsername() string {
 	return currUser.Name
 }
 
-func (cmd *baseCommand) getBaseVersion() *version.Version {
+func (cmd *BaseCommand) getBaseVersion() *version.Version {
 	if cmd.baseVersionString == "" {
 		if cmd.baseVersionFile == "" {
 			cmd.baseVersionFile = DefaultVersionFile
@@ -313,7 +313,7 @@ func (cmd *baseCommand) getBaseVersion() *version.Version {
 	return baseVersion
 }
 
-func (cmd *baseCommand) logJson(data []byte) {
+func (cmd *BaseCommand) logJson(data []byte) {
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, data, "", "    "); err == nil {
 		if _, err := fmt.Printf("Result:\n%s\n", prettyJSON.String()); err != nil {
@@ -326,13 +326,13 @@ func (cmd *baseCommand) logJson(data []byte) {
 	}
 }
 
-func (cmd *baseCommand) close(closer io.Closer, descripion string) {
+func (cmd *BaseCommand) close(closer io.Closer, descripion string) {
 	if err := closer.Close(); err != nil {
 		cmd.errorf("failed to close file %v with err: %v\n", descripion, err)
 	}
 }
 
-func (cmd *baseCommand) tarGzSimple(archiveFile string, filesToInclude ...string) {
+func (cmd *BaseCommand) tarGzSimple(archiveFile string, filesToInclude ...string) {
 	nameMap := map[string]string{}
 	for _, file := range filesToInclude {
 		_, fileName := filepath.Split(file)
@@ -341,7 +341,7 @@ func (cmd *baseCommand) tarGzSimple(archiveFile string, filesToInclude ...string
 	cmd.tarGz(archiveFile, nameMap)
 }
 
-func (cmd *baseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifact) {
+func (cmd *BaseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifact) {
 	nameMap := map[string]string{}
 	for _, artifact := range artifacts {
 		nameMap[artifact.sourcePath] = fmt.Sprintf("%v/%v/%v", artifact.arch, artifact.os, artifact.sourceName)
@@ -349,7 +349,7 @@ func (cmd *baseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifac
 	cmd.tarGz(archiveFile, nameMap)
 }
 
-func (cmd *baseCommand) tarGz(archiveFile string, nameMap map[string]string) {
+func (cmd *BaseCommand) tarGz(archiveFile string, nameMap map[string]string) {
 	outputFile, err := os.Create(archiveFile)
 	if err != nil {
 		cmd.failf("unexpected err trying to write to %v. err: %+v\n", archiveFile, err)

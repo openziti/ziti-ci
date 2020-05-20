@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -27,7 +27,7 @@ import (
 )
 
 type publishToArtifactoryCmd struct {
-	baseCommand
+	BaseCommand
 }
 
 type artifact struct {
@@ -152,7 +152,7 @@ func newPublishToArtifactoryCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &publishToArtifactoryCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"encoding/base64"
@@ -33,7 +33,7 @@ const (
 )
 
 type configureGitCmd struct {
-	baseCommand
+	BaseCommand
 
 	gitUsername string
 	gitEmail    string
@@ -85,7 +85,7 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &configureGitCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},

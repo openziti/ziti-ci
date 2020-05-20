@@ -15,33 +15,24 @@
  *
  */
 
-package main
+package publish
 
 import (
+	"github.com/netfoundry/ziti-ci/cmd/publish/artifactory"
 	"github.com/spf13/cobra"
 )
 
-type packageCmd struct {
-	baseCommand
-}
+func NewPublishCmd() *cobra.Command {
 
-func (cmd *packageCmd) execute() {
-	cmd.tarGzSimple(cmd.args[0], cmd.args[1:]...)
-}
-
-func newPackageCmd(root *rootCommand) *cobra.Command {
-	cobraCmd := &cobra.Command{
-		Use:   "package <destination> <files>",
-		Short: "Packages files for release",
-		Args:  cobra.MinimumNArgs(2),
-	}
-
-	result := &packageCmd{
-		baseCommand: baseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+	command := &cobra.Command{
+		Use:   "publish",
+		Short: "Publishes an artifact to an artifact repo",
+		Long:  "Useless on its own. Must be chained to a particular repository to publish",
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
 		},
 	}
 
-	return finalize(result)
+	command.AddCommand(artifactory.NewPublishArtifactoryCmd())
+	return command
 }

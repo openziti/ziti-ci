@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ import (
 )
 
 type updateGoDepCmd struct {
-	baseCommand
+	BaseCommand
 }
 
 func (cmd *updateGoDepCmd) execute() {
@@ -80,7 +80,7 @@ func newUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &updateGoDepCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},
@@ -90,7 +90,7 @@ func newUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 }
 
 type completeUpdateGoDepCmd struct {
-	baseCommand
+	BaseCommand
 }
 
 func (cmd *completeUpdateGoDepCmd) execute() {
@@ -114,7 +114,7 @@ func newCompleteUpdateGoDepCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &completeUpdateGoDepCmd{
-		baseCommand: baseCommand{
+		BaseCommand: BaseCommand{
 			rootCommand: root,
 			cmd:         cobraCmd,
 		},
