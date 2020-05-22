@@ -54,7 +54,7 @@ func (cmd *configureGitCmd) execute() {
 
 	kfAbs, err := filepath.Abs(cmd.sshKeyFile)
 	if err != nil {
-		cmd.failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
+		cmd.Failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
 	}
 
 	keyDir := path.Dir(kfAbs)
@@ -78,19 +78,19 @@ func (cmd *configureGitCmd) execute() {
 	}
 
 	if !ignoreExists {
-		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
+		cmd.Infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
 		//add the deploy key to .gitignore... next to whereever the sshkey goes...
 		f, err := os.OpenFile(keyDir + string(os.PathSeparator) + ".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			cmd.failf("could not write to .gitignore", err)
+			cmd.Failf("could not write to .gitignore", err)
 		}
 		defer f.Close()
 		if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
-			cmd.failf("error writing to .gitignore", err)
+			cmd.Failf("error writing to .gitignore", err)
 		}
 	} else {
-		cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
+		cmd.Infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 	}
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
