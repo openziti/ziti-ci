@@ -72,12 +72,12 @@ func (cmd *configureGitCmd) execute() {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			if strings.Contains(scanner.Text(), cmd.sshKeyFile) {
-				cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 				ignoreExists = true
 			}
 		}
 
 		if !ignoreExists {
+			cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore")
 			//add the deploy key to .gitignore... next to whereever the sshkey goes...
 			f, err := os.OpenFile(keyDir + "/.gitignore",
 				os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -88,6 +88,8 @@ func (cmd *configureGitCmd) execute() {
 			if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
 				cmd.failf("error writing to .gitignore", err)
 			}
+		} else {
+			cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 		}
 
 		if err := scanner.Err(); err != nil {
