@@ -24,6 +24,7 @@ import (
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -58,14 +59,15 @@ func (cmd *configureGitCmd) execute() {
 		cmd.failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
 	}
 
-	keyDir, err := filepath.Abs(cmd.sshKeyFile)
+	kfAbs, err := filepath.Abs(cmd.sshKeyFile)
 	if err != nil {
 		cmd.failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
 	}
 
-	ignoreExists := false
+	keyDir := path.Dir(kfAbs)
 
-	file, err := os.Open(keyDir + "/.gitignore")
+	ignoreExists := false
+	file, err := os.Open(keyDir + string(os.PathSeparator) + ".gitignore")
 	if err != nil {
 		//probably means the file isn't there etc. just ignore this particular error
 	} else {
@@ -83,9 +85,9 @@ func (cmd *configureGitCmd) execute() {
 	}
 
 	if !ignoreExists {
-		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore")
+		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
 		//add the deploy key to .gitignore... next to whereever the sshkey goes...
-		f, err := os.OpenFile(keyDir + "/.gitignore",
+		f, err := os.OpenFile(keyDir + string(os.PathSeparator) + ".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			cmd.failf("could not write to .gitignore", err)
