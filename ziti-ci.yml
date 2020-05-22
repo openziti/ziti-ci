@@ -1,5 +1,5 @@
 before_install:
-  - "[ -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci || true"
-  - "[ ! -z \"$ZITI_CI_VERSION\" ] && go get github.com/netfoundry/ziti-ci@$ZITI_CI_VERSION || true"
+  - if [[ -z $ZITI_CI_VERSION ]]; then echo "ZITI_CI_VERSION not supplied"; go get github.com/netfoundry/ziti-ci; fi
+  - if [[ ! -z $ZITI_CI_VERSION ]]; then echo "ZITI_CI_VERSION: ${ZITI_CI_VERSION}"; go get github.com/netfoundry/ziti-ci@$ZITI_CI_VERSION; fi
   - echo $(which ziti-ci)
   - ziti-ci version
