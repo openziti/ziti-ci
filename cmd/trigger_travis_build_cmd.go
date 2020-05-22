@@ -31,14 +31,14 @@ type triggerTravisBuidlCmd struct {
 	travisToken string
 }
 
-func (cmd *triggerTravisBuidlCmd) execute() {
-	cmd.evalCurrentAndNextVersion()
+func (cmd *triggerTravisBuidlCmd) Execute() {
+	cmd.EvalCurrentAndNextVersion()
 
 	if cmd.travisToken == "" {
 		found := false
 		cmd.travisToken, found = os.LookupEnv("travis_token")
 		if !found {
-			cmd.failf("no travis token provided. Unable to trigger builds\n")
+			cmd.Failf("no travis token provided. Unable to trigger builds\n")
 		}
 	}
 
@@ -56,13 +56,13 @@ func (cmd *triggerTravisBuidlCmd) execute() {
   			}
 		}`
 
-	branch := cmd.args[1]
-	module := fmt.Sprintf("%v@v%v", cmd.getModule(), cmd.currentVersion.String())
+	branch := cmd.Args[1]
+	module := fmt.Sprintf("%v@v%v", cmd.getModule(), cmd.CurrentVersion.String())
 	body := fmt.Sprintf(bodyTemplate, branch, module, module)
 
 	client := resty.New()
 
-	targetRepo := url.QueryEscape(cmd.args[0])
+	targetRepo := url.QueryEscape(cmd.Args[0])
 	targetUrl := fmt.Sprintf("https://api.travis-ci.org/repo/%v/requests", targetRepo)
 
 	resp, err := client.R().
@@ -75,19 +75,19 @@ func (cmd *triggerTravisBuidlCmd) execute() {
 		Post(targetUrl)
 
 	if err != nil {
-		cmd.failf("Error triggering build s\n")
+		cmd.Failf("Error triggering build s\n")
 		panic(err)
 	}
 
 	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusAccepted {
 		cmd.logJson(resp.Body())
-		cmd.failf("Error triggering build. REST call returned %v", resp.StatusCode())
+		cmd.Failf("Error triggering build. REST call returned %v", resp.StatusCode())
 	}
 
-	cmd.infof("successfully triggered build of %v to update to %v\n", cmd.args[0], module)
+	cmd.Infof("successfully triggered build of %v to update to %v\n", cmd.Args[0], module)
 }
 
-func newTriggerTravisBuildCmd(root *rootCommand) *cobra.Command {
+func newTriggerTravisBuildCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "trigger-travis-build <target-repo> <target-branch>",
 		Short: "Trigger a Travis CI build",
@@ -96,12 +96,12 @@ func newTriggerTravisBuildCmd(root *rootCommand) *cobra.Command {
 
 	result := &triggerTravisBuidlCmd{
 		BaseCommand: BaseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
 	cobraCmd.PersistentFlags().StringVar(&result.travisToken, "token", "", "Travis token to use to trigger the build")
 
-	return finalize(result)
+	return Finalize(result)
 }

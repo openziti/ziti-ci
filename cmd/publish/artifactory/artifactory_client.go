@@ -49,7 +49,7 @@ type MavenLayout struct {
   accessToken string
 }
 
-func(m *MavenLayout) Deploy() {
+func(m *MavenLayout) Publish() {
   checkInput(m)
 
   fmt.Println()

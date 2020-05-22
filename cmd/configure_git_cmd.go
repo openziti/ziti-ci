@@ -25,13 +25,6 @@ import (
 	"os"
 )
 
-const (
-	DefaultGitUsername  = "ziti-ci"
-	DefaultGitEmail     = "ziti-ci@netfoundry.io"
-	DefaultSshKeyEnvVar = "gh_ci_key"
-	DefaultSshKeyFile   = "github_deploy_key"
-)
-
 type configureGitCmd struct {
 	BaseCommand
 
@@ -46,38 +39,38 @@ func (cmd *configureGitCmd) execute() {
 	if val, found := os.LookupEnv(cmd.sshKeyEnv); found && val != "" {
 		sshKey, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
-			cmd.failf("unable to decode ssh key. err: %v\n", err)
+			cmd.Failf("unable to decode ssh key. err: %v\n", err)
 		}
 		if err = ioutil.WriteFile(cmd.sshKeyFile, sshKey, 0600); err != nil {
-			cmd.failf("unable to write ssh key file %v. err: %v\n", cmd.sshKeyFile, err)
+			cmd.Failf("unable to write ssh key file %v. err: %v\n", cmd.sshKeyFile, err)
 		}
 	} else {
-		cmd.failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
+		cmd.Failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
 	}
 
 	//add the deploy key to .gitignore...
 	f, err := os.OpenFile(".gitignore",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		cmd.failf("could not write to .gitignore", err)
+		cmd.Failf("could not write to .gitignore", err)
 	}
 	defer f.Close()
 	if _, err := f.WriteString(DefaultSshKeyFile + "\n"); err != nil {
-		cmd.failf("error writing to .gitignore", err)
+		cmd.Failf("error writing to .gitignore", err)
 	}
 
-	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
-	cmd.runGitCommand("set git password", "config", "user.email", cmd.gitEmail)
-	cmd.runGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
+	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
+	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
+	cmd.RunGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
 
 	// Ensure we're in ssh mode
 	if repoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
 		url := fmt.Sprintf("git@github.com:%v.git", repoSlug)
-		cmd.runGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
+		cmd.RunGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
 	}
 }
 
-func newConfigureGitCmd(root *rootCommand) *cobra.Command {
+func newConfigureGitCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "configure-git",
 		Short: "Configure git",
@@ -86,8 +79,8 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 
 	result := &configureGitCmd{
 		BaseCommand: BaseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
@@ -96,5 +89,5 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyEnv, "ssh-key-env-var", DefaultSshKeyEnvVar, "set ssh key environment variable name")
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyFile, "ssh-key-file", DefaultSshKeyFile, "set ssh key file name")
 
-	return finalize(result)
+	return Finalize(result)
 }

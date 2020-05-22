@@ -25,11 +25,11 @@ type packageCmd struct {
 	BaseCommand
 }
 
-func (cmd *packageCmd) execute() {
-	cmd.tarGzSimple(cmd.args[0], cmd.args[1:]...)
+func (cmd *packageCmd) Execute() {
+	cmd.tarGzSimple(cmd.Args[0], cmd.Args[1:]...)
 }
 
-func newPackageCmd(root *rootCommand) *cobra.Command {
+func newPackageCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "package <destination> <files>",
 		Short: "Packages files for release",
@@ -38,10 +38,10 @@ func newPackageCmd(root *rootCommand) *cobra.Command {
 
 	result := &packageCmd{
 		BaseCommand: BaseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
-	return finalize(result)
+	return Finalize(result)
 }

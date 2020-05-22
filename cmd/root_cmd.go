@@ -32,7 +32,7 @@ const (
 
 var	RootCmd = newRootCommand()
 
-type rootCommand struct {
+type RootCommand struct {
 	RootCobraCmd *cobra.Command
 
 	verbose bool
@@ -45,13 +45,13 @@ type rootCommand struct {
 	baseVersionFile   string
 }
 
-func newRootCommand() *rootCommand {
+func newRootCommand() *RootCommand {
 	cobraCmd := &cobra.Command{
 		Use:   "ziti-ci",
 		Short: "Ziti CI Tool",
 	}
 
-	var rootCmd = &rootCommand{
+	var rootCmd = &RootCommand{
 		RootCobraCmd: cobraCmd,
 	}
 
@@ -89,7 +89,7 @@ func newRootCommand() *rootCommand {
 	return rootCmd
 }
 
-func(r *rootCommand) Execute() {
+func(r *RootCommand) Execute() {
 	if err := r.RootCobraCmd.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(1)

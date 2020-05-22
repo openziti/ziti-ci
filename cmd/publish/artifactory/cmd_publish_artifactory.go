@@ -31,10 +31,11 @@ func NewPublishArtifactoryCmd() *cobra.Command {
 		Long:  "Expects a maven-style repository to be specified. Defaults to " + DefaultRepo + " if not specified. " +
 			"Supports -SNAPSHOT versions to be specified",
 		Run: func(cmd *cobra.Command, args []string) {
-			m.Deploy()
+			m.Publish()
 		},
 	}
 
+	command.Flags().StringVar(&m.Repository, "repository", "", "the repo to publish to")
 	command.Flags().StringVar(&m.GroupId, "groupId", "", "the groupId to use. example: netfoundry.ziti")
 	command.Flags().StringVar(&m.ArtifactId, "artifactId", "", "the artifactId to use. example: ziti-ci")
 	command.Flags().StringVar(&m.Version, "version", "", "the version to deploy")

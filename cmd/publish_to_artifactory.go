@@ -40,13 +40,13 @@ type artifact struct {
 	os              string
 }
 
-func (cmd *publishToArtifactoryCmd) execute() {
+func (cmd *publishToArtifactoryCmd) Execute() {
 	jfrogApiKey, found := os.LookupEnv("JFROG_API_KEY")
 	if !found {
-		cmd.failf("JFROG_API_KEY not specified")
+		cmd.Failf("JFROG_API_KEY not specified")
 	}
 
-	cmd.evalCurrentAndNextVersion()
+	cmd.EvalCurrentAndNextVersion()
 
 	cmd.runCommand("install jfrog cli", "go", "get", "github.com/jfrog/jfrog-cli-go/...")
 	releaseDir, err := filepath.Abs("./release")
@@ -57,7 +57,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	var artifacts []*artifact
 	for _, archDir := range archDirs {
 		arch := archDir.Name()
-		cmd.infof("processing files for arch: %v\n", arch)
+		cmd.Infof("processing files for arch: %v\n", arch)
 		archDirPath := filepath.Join(releaseDir, archDir.Name())
 
 		if archDir.IsDir() {
@@ -66,7 +66,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 
 			for _, osDir := range osDirs {
 				os := osDir.Name()
-				cmd.infof("processing files for: %v/%v\n", arch, os)
+				cmd.Infof("processing files for: %v/%v\n", arch, os)
 
 				osDirPath := filepath.Join(archDirPath, osDir.Name())
 				releasableFiles, err := ioutil.ReadDir(osDirPath)
@@ -80,7 +80,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 						}
 						filePath := filepath.Join(osDirPath, releasableFile.Name())
 						destPath := filepath.Join(osDirPath, name+".tar.gz")
-						cmd.infof("packaging releasable: %v -> %v\n", filePath, destPath)
+						cmd.Infof("packaging releasable: %v -> %v\n", filePath, destPath)
 						cmd.tarGzSimple(destPath, filePath)
 						artifacts = append(artifacts, &artifact{
 							name:            name,
@@ -103,21 +103,21 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	// When rolling minor/major numbers the current version will be nil, so use the next version instead
 	// This will only happen when publishing a PR
 	version := cmd.getPublishVersion().String()
-	if cmd.getCurrentBranch() != "master" {
+	if cmd.GetCurrentBranch() != "master" {
 		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
 	for _, artifact := range artifacts {
 		dest := ""
 		// if release branch, publish to staging, otherwise to snapshot
-		if cmd.getCurrentBranch() == "master" {
+		if cmd.GetCurrentBranch() == "master" {
 			dest = fmt.Sprintf("ziti-staging/%v/%v/%v/%v/%v",
 				artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
 		} else {
 			dest = fmt.Sprintf("ziti-snapshot/%v/%v/%v/%v/%v/%v",
-				cmd.getCurrentBranch(), artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
+				cmd.GetCurrentBranch(), artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
 		}
-		props := fmt.Sprintf("version=%v;name=%v;arch=%v;os=%v;branch=%v", version, artifact.name, artifact.arch, artifact.os, cmd.getCurrentBranch())
+		props := fmt.Sprintf("version=%v;name=%v;arch=%v;os=%v;branch=%v", version, artifact.name, artifact.arch, artifact.os, cmd.GetCurrentBranch())
 		cmd.runCommand(fmt.Sprintf("Publish artifact for %v", artifact.name),
 			"jfrog", "rt", "u", artifact.artifactPath, dest,
 			"--apikey", jfrogApiKey,
@@ -127,9 +127,9 @@ func (cmd *publishToArtifactoryCmd) execute() {
 			"--build-number="+cmd.getPublishVersion().String())
 	}
 
-	if cmd.getCurrentBranch() == "master" {
+	if cmd.GetCurrentBranch() == "master" {
 		dest := fmt.Sprintf("ziti-staging/ziti-all/%v/ziti-all.%v.tar.gz", version, version)
-		props := fmt.Sprintf("version=%v;branch=%v", version, cmd.getCurrentBranch())
+		props := fmt.Sprintf("version=%v;branch=%v", version, cmd.GetCurrentBranch())
 		cmd.runCommand("Publish artifact for ziti-all",
 			"jfrog", "rt", "u", zitiAllPath, dest,
 			"--apikey", jfrogApiKey,
@@ -144,7 +144,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 	}
 }
 
-func newPublishToArtifactoryCmd(root *rootCommand) *cobra.Command {
+func newPublishToArtifactoryCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "publish-to-artifactory",
 		Short: "Publishes an artifact to artifactory",
@@ -153,10 +153,10 @@ func newPublishToArtifactoryCmd(root *rootCommand) *cobra.Command {
 
 	result := &publishToArtifactoryCmd{
 		BaseCommand: BaseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
-	return finalize(result)
+	return Finalize(result)
 }

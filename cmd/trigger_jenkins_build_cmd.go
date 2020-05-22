@@ -32,14 +32,14 @@ type triggerJenkinsSmokeBuildCmd struct {
 	jenkinsJobToken  string
 }
 
-func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
-	cmd.evalCurrentAndNextVersion()
+func (cmd *triggerJenkinsSmokeBuildCmd) Execute() {
+	cmd.EvalCurrentAndNextVersion()
 
 	if cmd.jenkinsUser == "" {
 		found := false
 		cmd.jenkinsUser, found = os.LookupEnv("jenkins_user")
 		if !found {
-			cmd.failf("no jenkins user provided. Unable to trigger builds\n")
+			cmd.Failf("no jenkins user provided. Unable to trigger builds\n")
 		}
 	}
 
@@ -47,7 +47,7 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 		found := false
 		cmd.jenkinsUserToken, found = os.LookupEnv("jenkins_user_token")
 		if !found {
-			cmd.failf("no jenkins user token provided. Unable to trigger builds\n")
+			cmd.Failf("no jenkins user token provided. Unable to trigger builds\n")
 		}
 	}
 
@@ -55,21 +55,21 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 		found := false
 		cmd.jenkinsJobToken, found = os.LookupEnv("jenkins_job_token")
 		if !found {
-			cmd.failf("no jenkins job token provided. Unable to trigger builds\n")
+			cmd.Failf("no jenkins job token provided. Unable to trigger builds\n")
 		}
 	}
 
 	client := resty.New()
 
 	version := cmd.getPublishVersion().String()
-	if cmd.getCurrentBranch() != "master" {
+	if cmd.GetCurrentBranch() != "master" {
 		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
 	resp, err := client.R().
 		EnableTrace().
 		SetQueryParam("token", cmd.jenkinsJobToken).
-		SetQueryParam("branch", cmd.getCurrentBranch()).
+		SetQueryParam("branch", cmd.GetCurrentBranch()).
 		SetQueryParam("version", version).
 		SetQueryParam("committer", cmd.getCommitterEmail()).
 		SetQueryParam("cause", fmt.Sprintf("triggered by Travis ziti-cmd build #%v", cmd.getBuildNumber())).
@@ -77,19 +77,19 @@ func (cmd *triggerJenkinsSmokeBuildCmd) execute() {
 		Post("https://jenkinstest.tools.netfoundry.io/job/ziti-smoke-test/buildWithParameters")
 
 	if err != nil {
-		cmd.failf("Error triggering build s\n")
+		cmd.Failf("Error triggering build s\n")
 		panic(err)
 	}
 
 	if resp.StatusCode() != http.StatusOK && resp.StatusCode() != http.StatusCreated && resp.StatusCode() != http.StatusAccepted {
 		cmd.logJson(resp.Body())
-		cmd.failf("Error triggering build. REST call returned %v", resp.StatusCode())
+		cmd.Failf("Error triggering build. REST call returned %v", resp.StatusCode())
 	}
 
-	cmd.infof("successfully triggered build of ziti-smoke-test for branch: %v, version: %v\n", cmd.getCurrentBranch(), version)
+	cmd.Infof("successfully triggered build of ziti-smoke-test for branch: %v, version: %v\n", cmd.GetCurrentBranch(), version)
 }
 
-func newTriggerJenkinsBuildCmd(root *rootCommand) *cobra.Command {
+func newTriggerJenkinsBuildCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "trigger-jenkins-smoke-build",
 		Short: "Trigger a Jenkins CI smoke test build",
@@ -98,8 +98,8 @@ func newTriggerJenkinsBuildCmd(root *rootCommand) *cobra.Command {
 
 	result := &triggerJenkinsSmokeBuildCmd{
 		BaseCommand: BaseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
@@ -107,5 +107,5 @@ func newTriggerJenkinsBuildCmd(root *rootCommand) *cobra.Command {
 	cobraCmd.PersistentFlags().StringVar(&result.jenkinsUserToken, "user-token", "", "Jenkins user API token to use to trigger the build")
 	cobraCmd.PersistentFlags().StringVar(&result.jenkinsJobToken, "job-token", "", "Jenkins job token to use to trigger the build")
 
-	return finalize(result)
+	return Finalize(result)
 }
