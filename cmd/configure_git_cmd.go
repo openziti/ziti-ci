@@ -18,11 +18,15 @@
 package cmd
 
 import (
+	"bufio"
 	"encoding/base64"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
+	"strings"
 )
 
 type configureGitCmd struct {
@@ -48,15 +52,45 @@ func (cmd *configureGitCmd) execute() {
 		cmd.Failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
 	}
 
-	//add the deploy key to .gitignore...
-	f, err := os.OpenFile(".gitignore",
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	kfAbs, err := filepath.Abs(cmd.sshKeyFile)
 	if err != nil {
-		cmd.Failf("could not write to .gitignore", err)
+		cmd.failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
 	}
-	defer f.Close()
-	if _, err := f.WriteString(DefaultSshKeyFile + "\n"); err != nil {
-		cmd.Failf("error writing to .gitignore", err)
+
+	keyDir := path.Dir(kfAbs)
+
+	ignoreExists := false
+	file, err := os.Open(keyDir + string(os.PathSeparator) + ".gitignore")
+	if err != nil {
+		//probably means the file isn't there etc. just ignore this particular error
+	} else {
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			if strings.Contains(scanner.Text(), cmd.sshKeyFile) {
+				ignoreExists = true
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			//probably means the file isn't there etc. just ignore this particular error
+		}
+		file.Close()
+	}
+
+	if !ignoreExists {
+		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
+		//add the deploy key to .gitignore... next to whereever the sshkey goes...
+		f, err := os.OpenFile(keyDir + string(os.PathSeparator) + ".gitignore",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			cmd.failf("could not write to .gitignore", err)
+		}
+		defer f.Close()
+		if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
+			cmd.failf("error writing to .gitignore", err)
+		}
+	} else {
+		cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 	}
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)

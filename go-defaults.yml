@@ -3,10 +3,11 @@ if: tag IS blank
 branches:
   only:
     - master
+    - /release-.*/
     - update-dependency
     - /^v\d+.*/
 
 language: go
 
 go:
-  - "1.13"
+  - "1.14.x"
