@@ -1,6 +1,6 @@
 module github.com/netfoundry/ziti-ci
 
-go 1.13
+go 1.14
 
 require (
 	github.com/go-resty/resty/v2 v2.1.0
