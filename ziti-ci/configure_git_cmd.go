@@ -76,27 +76,26 @@ func (cmd *configureGitCmd) execute() {
 			}
 		}
 
-		if !ignoreExists {
-			cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore")
-			//add the deploy key to .gitignore... next to whereever the sshkey goes...
-			f, err := os.OpenFile(keyDir + "/.gitignore",
-				os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-			if err != nil {
-				cmd.failf("could not write to .gitignore", err)
-			}
-			defer f.Close()
-			if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
-				cmd.failf("error writing to .gitignore", err)
-			}
-		} else {
-			cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
-		}
-
 		if err := scanner.Err(); err != nil {
 			//probably means the file isn't there etc. just ignore this particular error
 		}
-
 		file.Close()
+	}
+
+	if !ignoreExists {
+		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore")
+		//add the deploy key to .gitignore... next to whereever the sshkey goes...
+		f, err := os.OpenFile(keyDir + "/.gitignore",
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			cmd.failf("could not write to .gitignore", err)
+		}
+		defer f.Close()
+		if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
+			cmd.failf("error writing to .gitignore", err)
+		}
+	} else {
+		cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 	}
 
 	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
