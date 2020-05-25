@@ -39,7 +39,7 @@ type configureGitCmd struct {
 	sshKeyFile string
 }
 
-func (cmd *configureGitCmd) execute() {
+func (cmd *configureGitCmd) Execute() {
 	if val, found := os.LookupEnv(cmd.sshKeyEnv); found && val != "" {
 		sshKey, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
@@ -86,7 +86,7 @@ func (cmd *configureGitCmd) execute() {
 			cmd.Failf("could not write to .gitignore", err)
 		}
 		defer f.Close()
-		if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
+		if _, err := f.WriteString("\n" + cmd.sshKeyFile + "\n"); err != nil {
 			cmd.Failf("error writing to .gitignore", err)
 		}
 	} else {
