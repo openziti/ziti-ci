@@ -39,6 +39,7 @@ func NewPublishArtifactoryCmd() *cobra.Command {
 	command.Flags().StringVar(&m.GroupId, "groupId", "", "the groupId to use. example: netfoundry.ziti")
 	command.Flags().StringVar(&m.ArtifactId, "artifactId", "", "the artifactId to use. example: ziti-ci")
 	command.Flags().StringVar(&m.Version, "version", "", "the version to deploy")
+	command.Flags().StringVar(&m.Classifier, "classifier", "", "a classifier to add to the artifact")
 	command.Flags().StringVar(&m.UploadTarget, "target", "", "the file to upload/publish")
 	return command
 }
