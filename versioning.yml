@@ -1,4 +1,4 @@
 after_success:
-  - set -e
+  #- set -e
   - ziti-ci configure-git
   - ziti-ci tag -v -f "$VERSION_FILE"
