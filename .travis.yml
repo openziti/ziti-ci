@@ -6,10 +6,9 @@ import:
     if: type != pull_request
 
 script:
-  #- set -e
   - mkdir -p tmp
   - go build -o tmp ./...
-  - ./tmp/ziti-ci generate-build-info ziti-ci/build_info.go main
+  - ./tmp/ziti-ci generate-build-info cmd/build_info.go main
   - go build -o tmp ./...
   - ./tmp/ziti-ci configure-git
 
