@@ -3,7 +3,7 @@ if: tag IS blank
 branches:
   only:
     - master
-    - /release-.*/
+    - /release-.*\.x/
     - update-dependency
     - /^v\d+.*/
 
