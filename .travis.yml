@@ -8,7 +8,7 @@ import:
 script:
   - mkdir -p tmp
   - go build -o tmp ./...
-  - ./tmp/ziti-ci generate-build-info cmd/build_info.go main
+  - ./tmp/ziti-ci generate-build-info cmd/build_info.go cmd
   - go build -o tmp ./...
   - ./tmp/ziti-ci configure-git
 
