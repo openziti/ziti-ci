@@ -60,37 +60,33 @@ func (cmd *configureGitCmd) Execute() {
 	keyDir := path.Dir(kfAbs)
 
 	ignoreExists := false
-	file, err := os.Open(keyDir + string(os.PathSeparator) + ".gitignore")
-	if err != nil {
-		//probably means the file isn't there etc. just ignore this particular error
-	} else {
+	if file, err := os.Open(keyDir + string(os.PathSeparator) + ".gitignore"); err == nil {
+		// if err, file probably isn't there etc. just ignore this particular error
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			if strings.Contains(scanner.Text(), cmd.sshKeyFile) {
 				ignoreExists = true
 			}
 		}
-
-		if err := scanner.Err(); err != nil {
-			//probably means the file isn't there etc. just ignore this particular error
-		}
 		file.Close()
+	} else {
+		cmd.Infof("unable to scan .gitignore: %v\n", err)
 	}
 
 	if !ignoreExists {
 		cmd.Infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
 		//add the deploy key to .gitignore... next to whereever the sshkey goes...
-		f, err := os.OpenFile(keyDir + string(os.PathSeparator) + ".gitignore",
+		f, err := os.OpenFile(keyDir+string(os.PathSeparator)+".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			cmd.Failf("could not write to .gitignore", err)
+			cmd.Failf("could not write to .gitignore\n", err)
 		}
 		defer f.Close()
 		if _, err := f.WriteString("\n" + cmd.sshKeyFile + "\n"); err != nil {
-			cmd.Failf("error writing to .gitignore", err)
+			cmd.Failf("error writing to .gitignore\n", err)
 		}
 	} else {
-		cmd.Infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
+		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
