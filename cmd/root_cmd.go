@@ -30,7 +30,7 @@ const (
 	LangGo langType = 1
 )
 
-var	RootCmd = newRootCommand()
+var RootCmd = newRootCommand()
 
 type RootCommand struct {
 	RootCobraCmd *cobra.Command
@@ -80,7 +80,7 @@ func newRootCommand() *RootCommand {
 		Short: "Show build information",
 		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("ziti-cmd version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n",
+			fmt.Printf("ziti-ci version: %v, revision: %v, branch: %v, build-by: %v, built-on: %v\n",
 				Version, Revision, Branch, BuildUser, BuildDate)
 		},
 	}
@@ -89,7 +89,7 @@ func newRootCommand() *RootCommand {
 	return rootCmd
 }
 
-func(r *RootCommand) Execute() {
+func (r *RootCommand) Execute() {
 	if err := r.RootCobraCmd.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(1)
