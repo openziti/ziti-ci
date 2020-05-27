@@ -1,8 +1,6 @@
 before_script:
-  #- set -e
   - ziti-ci configure-git
   - ziti-ci update-go-dependency
 
 after_success:
-  #- set -e
   - ziti-ci complete-update-go-dependency

@@ -1,3 +1,0 @@
-before_install:
-  #- set -e
-  - echo "Moved this to another step"
