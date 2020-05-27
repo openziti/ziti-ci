@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"github.com/hashicorp/go-version"

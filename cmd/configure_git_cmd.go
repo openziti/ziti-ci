@@ -15,7 +15,7 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"bufio"
@@ -29,15 +29,8 @@ import (
 	"strings"
 )
 
-const (
-	DefaultGitUsername  = "ziti-ci"
-	DefaultGitEmail     = "ziti-ci@netfoundry.io"
-	DefaultSshKeyEnvVar = "gh_ci_key"
-	DefaultSshKeyFile   = "github_deploy_key"
-)
-
 type configureGitCmd struct {
-	baseCommand
+	BaseCommand
 
 	gitUsername string
 	gitEmail    string
@@ -46,22 +39,22 @@ type configureGitCmd struct {
 	sshKeyFile string
 }
 
-func (cmd *configureGitCmd) execute() {
+func (cmd *configureGitCmd) Execute() {
 	if val, found := os.LookupEnv(cmd.sshKeyEnv); found && val != "" {
 		sshKey, err := base64.StdEncoding.DecodeString(val)
 		if err != nil {
-			cmd.failf("unable to decode ssh key. err: %v\n", err)
+			cmd.Failf("unable to decode ssh key. err: %v\n", err)
 		}
 		if err = ioutil.WriteFile(cmd.sshKeyFile, sshKey, 0600); err != nil {
-			cmd.failf("unable to write ssh key file %v. err: %v\n", cmd.sshKeyFile, err)
+			cmd.Failf("unable to write ssh key file %v. err: %v\n", cmd.sshKeyFile, err)
 		}
 	} else {
-		cmd.failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
+		cmd.Failf("unable to read ssh key from env var %v. Found? %v\n", cmd.sshKeyEnv, found)
 	}
 
 	kfAbs, err := filepath.Abs(cmd.sshKeyFile)
 	if err != nil {
-		cmd.failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
+		cmd.Failf("unable to read path for sshKeyFile? %v\n", cmd.sshKeyFile)
 	}
 
 	keyDir := path.Dir(kfAbs)
@@ -85,33 +78,33 @@ func (cmd *configureGitCmd) execute() {
 	}
 
 	if !ignoreExists {
-		cmd.infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
+		cmd.Infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
 		//add the deploy key to .gitignore... next to whereever the sshkey goes...
 		f, err := os.OpenFile(keyDir + string(os.PathSeparator) + ".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			cmd.failf("could not write to .gitignore", err)
+			cmd.Failf("could not write to .gitignore", err)
 		}
 		defer f.Close()
-		if _, err := f.WriteString(cmd.sshKeyFile + "\n"); err != nil {
-			cmd.failf("error writing to .gitignore", err)
+		if _, err := f.WriteString("\n" + cmd.sshKeyFile + "\n"); err != nil {
+			cmd.Failf("error writing to .gitignore", err)
 		}
 	} else {
-		cmd.infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
+		cmd.Infof(".gitignore file already contains entry for " + cmd.sshKeyFile)
 	}
 
-	cmd.runGitCommand("set git username", "config", "user.name", cmd.gitUsername)
-	cmd.runGitCommand("set git password", "config", "user.email", cmd.gitEmail)
-	cmd.runGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
+	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
+	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
+	cmd.RunGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
 
 	// Ensure we're in ssh mode
 	if repoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
 		url := fmt.Sprintf("git@github.com:%v.git", repoSlug)
-		cmd.runGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
+		cmd.RunGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
 	}
 }
 
-func newConfigureGitCmd(root *rootCommand) *cobra.Command {
+func newConfigureGitCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "configure-git",
 		Short: "Configure git",
@@ -119,9 +112,9 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 	}
 
 	result := &configureGitCmd{
-		baseCommand: baseCommand{
-			rootCommand: root,
-			cmd:         cobraCmd,
+		BaseCommand: BaseCommand{
+			RootCommand: root,
+			Cmd:         cobraCmd,
 		},
 	}
 
@@ -130,5 +123,5 @@ func newConfigureGitCmd(root *rootCommand) *cobra.Command {
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyEnv, "ssh-key-env-var", DefaultSshKeyEnvVar, "set ssh key environment variable name")
 	cobraCmd.PersistentFlags().StringVar(&result.sshKeyFile, "ssh-key-file", DefaultSshKeyFile, "set ssh key file name")
 
-	return finalize(result)
+	return Finalize(result)
 }

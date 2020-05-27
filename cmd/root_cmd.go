@@ -15,17 +15,54 @@
  *
  */
 
-package main
+package cmd
 
 import (
 	"fmt"
+	"github.com/netfoundry/ziti-ci/cmd/publish"
 	"github.com/spf13/cobra"
 	"os"
 )
 
-func main() {
-	rootCmd := newRootCommand()
-	rootCobraCmd := rootCmd.rootCobraCmd
+type langType int
+
+const (
+	LangGo langType = 1
+)
+
+var	RootCmd = newRootCommand()
+
+type RootCommand struct {
+	RootCobraCmd *cobra.Command
+
+	verbose bool
+	dryRun  bool
+
+	langName string
+	lang     langType
+
+	baseVersionString string
+	baseVersionFile   string
+}
+
+func newRootCommand() *RootCommand {
+	cobraCmd := &cobra.Command{
+		Use:   "ziti-ci",
+		Short: "Ziti CI Tool",
+	}
+
+	var rootCmd = &RootCommand{
+		RootCobraCmd: cobraCmd,
+	}
+
+	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.verbose, "verbose", "v", false, "enable verbose output")
+	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.dryRun, "dry-run", "d", false, "do a dry run")
+	cobraCmd.PersistentFlags().StringVarP(&rootCmd.langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
+
+	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionString, "base-version", "b", "", "set base version")
+	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")
+
+	rootCobraCmd := rootCmd.RootCobraCmd
 
 	rootCobraCmd.AddCommand(newTagCmd(rootCmd))
 	rootCobraCmd.AddCommand(newGoBuildInfoCmd(rootCmd))
@@ -36,6 +73,7 @@ func main() {
 	rootCobraCmd.AddCommand(newTriggerTravisBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
+	rootCobraCmd.AddCommand(publish.NewPublishCmd())
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
@@ -48,8 +86,11 @@ func main() {
 	}
 
 	rootCobraCmd.AddCommand(versionCmd)
+	return rootCmd
+}
 
-	if err := rootCmd.rootCobraCmd.Execute(); err != nil {
+func(r *RootCommand) Execute() {
+	if err := r.RootCobraCmd.Execute(); err != nil {
 		fmt.Printf("error: %s\n", err)
 		os.Exit(1)
 	}
