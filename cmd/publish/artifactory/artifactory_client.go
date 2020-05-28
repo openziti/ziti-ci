@@ -133,14 +133,14 @@ func(m *MavenLayout) Publish() {
 <project 
   xmlns="http://maven.apache.org/POM/4.0.0" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-  http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>{{.GroupId}}</groupId>
   <artifactId>{{.ArtifactId}}</artifactId>
   <version>{{.Version}}</version>
   <description>ziti-ci auto generated POM</description>
   <type>{{.Ext}}</type>
+  {{if .Classifier}}<classifier>{{.Classifier}}</classifier>{{end}}
 </project>`
 
   t := template.Must(template.New("pomTemplate").Parse(pomTemplate))
@@ -158,6 +158,9 @@ func(m *MavenLayout) Publish() {
   params.Target = l
   params.Pattern = pom.Name()
 
+  pomBytes, _ := ioutil.ReadFile(pom.Name())
+  pomContents := string(pomBytes)
+  fmt.Printf("%s", pomContents)
   log.SetLogger(log.NewLogger(log.DEBUG, os.Stdout))
 
   artifactsFileInfo, totalUploaded, totalFailed, err = rtManager.UploadFiles(params)
