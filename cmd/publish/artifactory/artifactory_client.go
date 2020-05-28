@@ -158,9 +158,6 @@ func(m *MavenLayout) Publish() {
   params.Target = l
   params.Pattern = pom.Name()
 
-  pomBytes, _ := ioutil.ReadFile(pom.Name())
-  pomContents := string(pomBytes)
-  fmt.Printf("%s", pomContents)
   log.SetLogger(log.NewLogger(log.DEBUG, os.Stdout))
 
   artifactsFileInfo, totalUploaded, totalFailed, err = rtManager.UploadFiles(params)
