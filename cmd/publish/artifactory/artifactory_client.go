@@ -29,6 +29,7 @@ import (
   "os"
   "strings"
   "text/template"
+  "time"
 )
 
 const DefaultUrl = "https://netfoundry.jfrog.io/artifactory"
@@ -97,7 +98,9 @@ func(m *MavenLayout) Publish() {
    os.Exit(3)
   }
 
+  now := int32(time.Now().Unix())
   params := services.NewUploadParams()
+  params.Props = fmt.Sprintf("build.timestamp=%d", now)
   params.Target = l
   params.Pattern = m.UploadTarget
 
@@ -155,6 +158,7 @@ func(m *MavenLayout) Publish() {
     os.Exit(3)
   }
   params = services.NewUploadParams()
+  params.Props = fmt.Sprintf("build.timestamp=%d", now)
   params.Target = l
   params.Pattern = pom.Name()
 
