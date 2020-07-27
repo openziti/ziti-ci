@@ -238,8 +238,10 @@ func (cmd *BaseCommand) getVersionList(params ...string) []*version.Version {
 		}
 
 		v, err := version.NewVersion(line)
-		if err != nil && cmd.verbose {
-			cmd.Errorf("failure interpreting tag version on %v: %v\n", line, err)
+		if err != nil {
+			if cmd.verbose {
+				cmd.Errorf("failure interpreting tag version on %v: %v\n", line, err)
+			}
 			continue
 		}
 		versions = append(versions, v)
