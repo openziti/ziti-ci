@@ -68,6 +68,7 @@ type GoBuildInfoCmd struct {
 	BaseCommand
 
 	useV bool
+	noAddNoCommit bool
 }
 
 func (cmd *GoBuildInfoCmd) Execute() {
@@ -104,10 +105,15 @@ func (cmd *GoBuildInfoCmd) Execute() {
 		cmd.Failf("failure executing build template to output file %v. err: %+v\n", cmd.Args[0], err)
 	}
 
-	cmd.RunGitCommand("add build info file to git", "add", cmd.Args[0])
 	cmd.RunGitCommand("set git username", "config", "user.name", DefaultGitUsername)
 	cmd.RunGitCommand("set git password", "config", "user.email", DefaultGitEmail)
-	cmd.RunGitCommand("commit build info file", "commit", "-m", fmt.Sprintf("Release %v", tagVersion))
+
+	if cmd.noAddNoCommit {
+		cmd.Infof("--noAddNoCommit specified - not committing %s", cmd.Args[0])
+	} else {
+		cmd.RunGitCommand("add build info file to git", "add", cmd.Args[0])
+		cmd.RunGitCommand("commit build info file", "commit", "-m", fmt.Sprintf("Release %v", tagVersion))
+	}
 }
 
 func newGoBuildInfoCmd(root *RootCommand) *cobra.Command {
@@ -125,6 +131,7 @@ func newGoBuildInfoCmd(root *RootCommand) *cobra.Command {
 	}
 
 	cobraCmd.Flags().BoolVar(&result.useV, "useVersion", true, "include a 'v' in the version or not, default is true")
+	cobraCmd.Flags().BoolVar(&result.noAddNoCommit, "noAddNoCommit", false, "do not add nor commit the version file in this action, default is false")
 
 	return Finalize(result)
 }
