@@ -30,7 +30,8 @@ type updateGoDepCmd struct {
 
 func (cmd *updateGoDepCmd) Execute() {
 	cmd.RunGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
-	cmd.RunGitCommand("Ensure " + cmd.GetCurrentBranch() + " is up to date", "fetch", "origin", cmd.GetCurrentBranch())
+	//seems to have broken update deps... cmd.RunGitCommand("Ensure " + cmd.GetCurrentBranch() + " is up to date", "fetch", "origin", cmd.GetCurrentBranch())
+	cmd.RunGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
 	cmd.RunGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 
 	if !isManualCompleteProject() {
