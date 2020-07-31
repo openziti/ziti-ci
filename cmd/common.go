@@ -82,6 +82,9 @@ func (cmd *BaseCommand) Infof(format string, params ...interface{}) {
 func (cmd *BaseCommand) Errorf(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStderr(), format, params...)
 }
+func (cmd *BaseCommand) Warnf(format string, params ...interface{}) {
+	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), "WARNING: " + format, params...)
+}
 
 func (cmd *BaseCommand) exitIfErrf(err error, format string, params ...interface{}) {
 	if err != nil {
@@ -240,7 +243,7 @@ func (cmd *BaseCommand) getVersionList(params ...string) []*version.Version {
 		v, err := version.NewVersion(line)
 		if err != nil {
 			if cmd.verbose {
-				cmd.Errorf("failure interpreting tag version on %v: %v\n", line, err)
+				cmd.Warnf("failure interpreting tag version on %v: %v\n", line, err)
 			}
 			continue
 		}
