@@ -31,7 +31,7 @@ func (cmd *publishToArtifactoryCmd) execute() {
 
 	cmd.evalCurrentAndNextVersion()
 
-	cmd.runCommand("install jfrog cli", "go", "get", "github.com/jfrog/jfrog-cli-go/...")
+	cmd.runCommand("install jfrog cli", "go", "get", "github.com/jfrog/jfrog-cli/...")
 	releaseDir, err := filepath.Abs("./release")
 	cmd.exitIfErrf(err, "could not get absolute path for releases directory")
 
