@@ -4,6 +4,7 @@ branches:
   only:
     - master
     - /release-.*\.x/
+    - release-next
     - update-dependency
     - /^v\d+.*/
 
