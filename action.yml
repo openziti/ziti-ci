@@ -1,0 +1,23 @@
+name: "Setup Ziti Build Environment"
+
+inputs:
+  ziti-ci-version:
+    description: 'The version of ziti-ci to use'
+    default: HEAD
+
+runs:
+  using: "composite"
+  steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: setup go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '^1.15.0'
+
+    - name: install ziti-ci
+      run: go get github.com/netfoundry/ziti-ci@${{ inputs.ziti-ci-version }}
+
+    - name: reset go modules files
+      run: git co -- go.mod go.sum
