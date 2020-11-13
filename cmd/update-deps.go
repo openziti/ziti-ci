@@ -75,7 +75,7 @@ func (cmd *updateGoDepCmd) getUpdatedDep() string {
 
 func newUpdateGoDepCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
-		Use:   "update-go-dependency",
+		Use:   "update-go-dependency <updated-dependency>",
 		Short: "Update a go dependency to a different version",
 		Args:  cobra.MaximumNArgs(1),
 	}

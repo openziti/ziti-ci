@@ -71,6 +71,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newCompleteUpdateGoDepCmd(rootCmd))
 	rootCobraCmd.AddCommand(newTriggerJenkinsBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newTriggerTravisBuildCmd(rootCmd))
+	rootCobraCmd.AddCommand(newTriggerGithubBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
