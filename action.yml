@@ -14,4 +14,4 @@ runs:
 
     - name: reset go modules files
       shell: bash
-      run: git co -- go.mod go.sum
+      run: git checkout -- go.mod go.sum
