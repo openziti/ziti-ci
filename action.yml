@@ -3,7 +3,7 @@ name: "Setup Ziti Build Environment"
 inputs:
   ziti-ci-version:
     description: "The version of ziti-ci to use"
-    default: "@v1"
+    default: ""
 
 runs:
   using: "composite"
