@@ -25,7 +25,7 @@ jobs:
           go build -o tmp ./...
           ./tmp/ziti-ci generate-build-info cmd/build_info.go cmd
           go build -o tmp ./...
-          echo "::set-env name=ZITI_CI_VERSION::$(./tmp/ziti-ci get-version -q)"
+          echo "ZITI_CI_VERSION=$(./tmp/ziti-ci get-version -q)" >> $GITHUB_ENV
           ./tmp/ziti-ci configure-git
           ./tmp/ziti-ci tag -v -f version
 
