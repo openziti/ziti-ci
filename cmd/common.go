@@ -83,7 +83,7 @@ func (cmd *BaseCommand) Errorf(format string, params ...interface{}) {
 	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStderr(), format, params...)
 }
 func (cmd *BaseCommand) Warnf(format string, params ...interface{}) {
-	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), "WARNING: " + format, params...)
+	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), "WARNING: "+format, params...)
 }
 
 func (cmd *BaseCommand) exitIfErrf(err error, format string, params ...interface{}) {
@@ -266,10 +266,21 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 
 		if val, found := os.LookupEnv("TRAVIS_PULL_REQUEST_BRANCH"); found && val != "" {
 			branchName = val
+			cmd.Infof("got branch name=%v from environment variable=TRAVIS_PULL_REQUEST_BRANCH\n", branchName)
 		} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
 			branchName = val
+			cmd.Infof("got branch name=%v from environment variable=TRAVIS_BRANCH\n", branchName)
+		} else if val, found := os.LookupEnv("GITHUB_REF"); found && val != "" {
+			branchName = val
+			if strings.HasPrefix(branchName, "refs/heads/") {
+				branchName = strings.TrimPrefix(branchName, "refs/heads/")
+			}
+			cmd.Infof("got branch name=%v from environment variable=GITHUB_REF\n", branchName)
 		} else {
-			branchName = cmd.GetCmdOutputOneLine("get git branch", "git", "rev-parse", "--abbrev-ref", "HEAD")
+			branchName = cmd.GetCmdOutputOneLine("get git branch (rev-parse)", "git", "rev-parse", "--abbrev-ref", "HEAD")
+			if branchName == "HEAD" {
+				branchName = cmd.GetCmdOutputOneLine("get git branch (name-rev)", "git", "name-rev", "--name-only", "HEAD")
+			}
 		}
 		cmd.CurrentBranch = &branchName
 	}
