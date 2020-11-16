@@ -37,6 +37,7 @@ type RootCommand struct {
 
 	verbose bool
 	dryRun  bool
+	quiet   bool
 
 	langName string
 	lang     langType
@@ -56,6 +57,7 @@ func newRootCommand() *RootCommand {
 	}
 
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.verbose, "verbose", "v", false, "enable verbose output")
+	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.quiet, "quiet", "q", false, "disable informational output")
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.dryRun, "dry-run", "d", false, "do a dry run")
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
 
@@ -75,6 +77,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
+	rootCobraCmd.AddCommand(newGetVersionCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",

@@ -76,7 +76,9 @@ func (cmd *BaseCommand) Failf(format string, params ...interface{}) {
 }
 
 func (cmd *BaseCommand) Infof(format string, params ...interface{}) {
-	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), format, params...)
+	if !cmd.quiet {
+		_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), format, params...)
+	}
 }
 
 func (cmd *BaseCommand) Errorf(format string, params ...interface{}) {
@@ -152,7 +154,10 @@ func (cmd *BaseCommand) EvalCurrentAndNextVersion() {
 	if cmd.NextVersion.LessThan(cmd.BaseVersion) {
 		cmd.NextVersion = cmd.BaseVersion
 	}
-	fmt.Printf("current version: %v, next version: %v\n", cmd.CurrentVersion, cmd.NextVersion)
+
+	if !cmd.quiet {
+		fmt.Printf("current version: %v, next version: %v\n", cmd.CurrentVersion, cmd.NextVersion)
+	}
 }
 
 func (cmd *BaseCommand) RunGitCommand(description string, params ...string) {

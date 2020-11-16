@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - v*
-    tags:
-      - v*
 
 jobs:
   build:
@@ -27,12 +25,7 @@ jobs:
           go build -o tmp ./...
           ./tmp/ziti-ci generate-build-info cmd/build_info.go cmd
           go build -o tmp ./...
-
-      - name: Tag
-        env:
-          gh_ci_key: ${{ secrets.GH_CI_KEY }}
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
-        run: |
+          echo "::set-env name=ZITI_CI_VERSION::${./tmp/ziti-ci get-version -q}"
           ./tmp/ziti-ci configure-git
           ./tmp/ziti-ci tag -v -f version
 
@@ -41,10 +34,9 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ env.ZITI_CI_VERSION }}
+          release_name: Release ${{ env.ZITI_CI_VERSION }}
           draft: false
           prerelease: false
 
@@ -53,7 +45,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: ./tmp/ziti-ci
