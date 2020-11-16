@@ -285,6 +285,10 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 			branchName = cmd.GetCmdOutputOneLine("get git branch (rev-parse)", "git", "rev-parse", "--abbrev-ref", "HEAD")
 			if branchName == "HEAD" {
 				branchName = cmd.GetCmdOutputOneLine("get git branch (name-rev)", "git", "name-rev", "--name-only", "HEAD")
+				cmd.Infof("git name-rev returned %v\n", branchName)
+				if strings.HasPrefix(branchName, "/remotes/origin/") {
+					branchName = strings.TrimPrefix(branchName, "/remotes/origin/")
+				}
 			}
 		}
 		cmd.CurrentBranch = &branchName
