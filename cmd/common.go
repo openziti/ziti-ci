@@ -292,6 +292,8 @@ func (cmd *BaseCommand) getBuildNumber() string {
 		buildNumber := "0"
 		if val, found := os.LookupEnv("TRAVIS_BUILD_NUMBER"); found && val != "" {
 			buildNumber = val
+		} else if val, found := os.LookupEnv("GITHUB_RUN_NUMBER"); found && val != "" {
+			buildNumber = val
 		}
 		cmd.BuildNumber = &buildNumber
 	}
