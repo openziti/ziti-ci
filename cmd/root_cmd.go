@@ -78,6 +78,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
 	rootCobraCmd.AddCommand(newGetVersionCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGetBranchCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
