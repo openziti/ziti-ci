@@ -275,13 +275,23 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 		} else if val, found := os.LookupEnv("TRAVIS_BRANCH"); found && val != "" {
 			branchName = val
 			cmd.Infof("got branch name=%v from environment variable=TRAVIS_BRANCH\n", branchName)
-			//} else if val, found := os.LookupEnv("GITHUB_REF"); found && val != "" {
-			//	branchName = val
-			//	if strings.HasPrefix(branchName, "refs/heads/") {
-			//		branchName = strings.TrimPrefix(branchName, "refs/heads/")
-			//	}
-			//	cmd.Infof("got branch name=%v from environment variable=GITHUB_REF\n", branchName)
-		} else {
+		}
+
+		if val, _ := os.LookupEnv("GITHUB_ACTIONS"); val == "true" {
+			val, _ := os.LookupEnv("GITHUB_REF")
+
+			if strings.HasPrefix(val, "refs/pull") {
+				if val, _ = os.LookupEnv("GITHUB_HEAD_REF"); val != "" {
+					branchName = val
+					cmd.Infof("got branch name=%v from environment variable=GITHUB_HEAD_REF\n", val)
+				}
+			} else if strings.HasPrefix(val, "refs/heads/") {
+				branchName = strings.TrimPrefix(val, "refs/heads/")
+				cmd.Infof("got branch name=%v from environment variable=GITHUB_REF with value %v\n", branchName, val)
+			}
+		}
+
+		if branchName == "" {
 			branchName = cmd.GetCmdOutputOneLine("get git branch (rev-parse)", "git", "rev-parse", "--abbrev-ref", "HEAD")
 			if branchName == "HEAD" {
 				branchName = cmd.GetCmdOutputOneLine("get git branch (name-rev)", "git", "name-rev", "--name-only", "HEAD")
@@ -291,6 +301,7 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 				}
 			}
 		}
+
 		cmd.CurrentBranch = &branchName
 	}
 	return *cmd.CurrentBranch
