@@ -281,8 +281,12 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 			val, _ := os.LookupEnv("GITHUB_REF")
 			cmd.Infof("got branch name=%v from environment variable=GITHUB_REF\n", val)
 
-			val, _ = os.LookupEnv("GITHUB_HEAD_REF")
-			cmd.Infof("got branch name=%v from environment variable=GITHUB_HEAD_REF\n", val)
+			if strings.HasPrefix(val, "refs/pull") {
+				if val, _ = os.LookupEnv("GITHUB_HEAD_REF"); val != "" {
+					branchName = val
+					cmd.Infof("got branch name=%v from environment variable=GITHUB_HEAD_REF\n", val)
+				}
+			}
 		}
 
 		if branchName == "" {
