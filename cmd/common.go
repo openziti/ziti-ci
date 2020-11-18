@@ -19,6 +19,7 @@ package cmd
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
@@ -394,6 +395,14 @@ func (cmd *BaseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifac
 	cmd.tarGz(archiveFile, nameMap)
 }
 
+func (cmd *BaseCommand) tarGzGhArtifacts(archiveFile string, artifacts ...*githubArtifact) {
+	nameMap := map[string]string{}
+	for _, artifact := range artifacts {
+		nameMap[artifact.sourcePath] = fmt.Sprintf("ziti/%v", artifact.sourceName)
+	}
+	cmd.tarGz(archiveFile, nameMap)
+}
+
 func (cmd *BaseCommand) tarGz(archiveFile string, nameMap map[string]string) {
 	outputFile, err := os.Create(archiveFile)
 	if err != nil {
@@ -412,22 +421,59 @@ func (cmd *BaseCommand) tarGz(archiveFile string, nameMap map[string]string) {
 		}
 		fileInfo, err := file.Stat()
 		if err != nil {
-			cmd.close(gzw, "source file "+filePath)
+			cmd.close(file, "source file "+filePath)
 			cmd.Failf("unexpected err trying to read state file %v. err: %+v\n", filePath, err)
 		}
 
 		header, err := tar.FileInfoHeader(fileInfo, "")
 		if err != nil {
-			cmd.close(gzw, "source file "+filePath)
+			cmd.close(file, "source file "+filePath)
 			cmd.Failf("unexpected err trying to create tar header for %v. err: %+v\n", filePath, err)
 		}
 		header.Name = name
 		if err = tw.WriteHeader(header); err != nil {
-			cmd.close(gzw, "source file "+filePath)
+			cmd.close(file, "source file "+filePath)
 			cmd.Failf("unexpected err trying to write tar header for %v. err: %+v\n", filePath, err)
 		}
 
 		_, err = io.Copy(tw, file)
+		cmd.close(file, "source file "+filePath)
+		if err != nil {
+			cmd.Failf("unexpected err trying to write file %v to tar file. err: %+v\n", filePath, err)
+		}
+	}
+}
+
+func (cmd *BaseCommand) zipGhArtifacts(archiveFile string, artifacts ...*githubArtifact) {
+	nameMap := map[string]string{}
+	for _, artifact := range artifacts {
+		nameMap[artifact.sourcePath] = fmt.Sprintf("ziti/%v", artifact.sourceName)
+	}
+	cmd.zip(archiveFile, nameMap)
+}
+
+func (cmd *BaseCommand) zip(archiveFile string, nameMap map[string]string) {
+	outputFile, err := os.Create(archiveFile)
+	if err != nil {
+		cmd.Failf("unexpected err trying to write to %v. err: %+v\n", archiveFile, err)
+	}
+
+	zw := zip.NewWriter(outputFile)
+	defer cmd.close(zw, "zip writer for "+archiveFile)
+
+	for filePath, name := range nameMap {
+		file, err := os.Open(filePath)
+		if err != nil {
+			cmd.Failf("unexpected err trying to open file %v. err: %+v\n", filePath, err)
+		}
+
+		writer, err := zw.Create(name)
+		if err != nil {
+			cmd.close(file, "source file "+filePath)
+			cmd.Failf("unexpected err trying to write zip header for %v. err: %+v\n", filePath, err)
+		}
+
+		_, err = io.Copy(writer, file)
 		cmd.close(file, "source file "+filePath)
 		if err != nil {
 			cmd.Failf("unexpected err trying to write file %v to tar file. err: %+v\n", filePath, err)

@@ -76,6 +76,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newTriggerGithubBuildCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPackageCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
+	rootCobraCmd.AddCommand(newPublishToGithubCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
 	rootCobraCmd.AddCommand(newGetVersionCmd(rootCmd))
 	rootCobraCmd.AddCommand(newGetBranchCmd(rootCmd))
