@@ -80,6 +80,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
 	rootCobraCmd.AddCommand(newGetVersionCmd(rootCmd))
 	rootCobraCmd.AddCommand(newGetBranchCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGetReleaseNotesCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
