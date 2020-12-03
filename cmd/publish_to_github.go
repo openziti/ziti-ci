@@ -116,7 +116,11 @@ func (cmd *publishToGithubCmd) Execute() {
 	releaseNotesFile := fmt.Sprintf("changelog-%v.md", version)
 	extractReleaseNotes("CHANGELOG.md", version, releaseNotesFile)
 
-	releaseParams := []string{"release", "create", version, "-F", releaseNotesFile}
+	tagName := version
+	if cmd.isGoLang() {
+		tagName = "v" + version
+	}
+	releaseParams := []string{"release", "create", tagName, "-F", releaseNotesFile}
 
 	for _, releaseArtifact := range releaseArtifacts {
 		cmd.Infof("Publishing %v\n", releaseArtifact)
