@@ -62,7 +62,7 @@ func (cmd *triggerJenkinsSmokeBuildCmd) Execute() {
 	client := resty.New()
 
 	version := cmd.getPublishVersion().String()
-	if cmd.GetCurrentBranch() != "master" {
+	if !cmd.isReleaseBranch() {
 		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
