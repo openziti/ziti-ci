@@ -103,14 +103,14 @@ func (cmd *publishToArtifactoryCmd) Execute() {
 	// When rolling minor/major numbers the current version will be nil, so use the next version instead
 	// This will only happen when publishing a PR
 	version := cmd.getPublishVersion().String()
-	if cmd.GetCurrentBranch() != "master" {
+	if !cmd.isReleaseBranch() {
 		version = fmt.Sprintf("%v-%v", version, cmd.getBuildNumber())
 	}
 
 	for _, artifact := range artifacts {
 		dest := ""
 		// if release branch, publish to staging, otherwise to snapshot
-		if cmd.GetCurrentBranch() == "master" {
+		if cmd.isReleaseBranch() {
 			dest = fmt.Sprintf("ziti-staging/%v/%v/%v/%v/%v",
 				artifact.name, artifact.arch, artifact.os, version, artifact.artifactArchive)
 		} else {
@@ -127,7 +127,7 @@ func (cmd *publishToArtifactoryCmd) Execute() {
 			"--build-number="+cmd.getPublishVersion().String())
 	}
 
-	if cmd.GetCurrentBranch() == "master" {
+	if cmd.isReleaseBranch() {
 		dest := fmt.Sprintf("ziti-staging/ziti-all/%v/ziti-all.%v.tar.gz", version, version)
 		props := fmt.Sprintf("version=%v;branch=%v", version, cmd.GetCurrentBranch())
 		cmd.runCommand("Publish artifact for ziti-all",
