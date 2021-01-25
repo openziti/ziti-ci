@@ -31,15 +31,15 @@ type updateGoDepCmd struct {
 func (cmd *updateGoDepCmd) Execute() {
 	cmd.RunGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 	//seems to have broken update deps... cmd.RunGitCommand("Ensure " + cmd.GetCurrentBranch() + " is up to date", "fetch", "origin", cmd.GetCurrentBranch())
-	cmd.RunGitCommand("Ensure origin/master is up to date", "fetch", "origin", "master")
+	cmd.RunGitCommand("Ensure origin/main is up to date", "fetch", "origin", "main")
 	cmd.RunGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 
 	if !isManualCompleteProject() {
-		cmd.RunGitCommand("Sync with master", "merge", "--ff-only", "origin/master")
+		cmd.RunGitCommand("Sync with main", "merge", "--ff-only", "origin/main")
 
-		output := cmd.runCommandWithOutput("Ensure we are synced", "git", "diff", "origin/master")
+		output := cmd.runCommandWithOutput("Ensure we are synced", "git", "diff", "origin/main")
 		if len(output) != 0 {
-			cmd.Failf("update branch has diverged from master. automated merges won't work until this is fixed. Diff: %+v", strings.Join(output, "\n"))
+			cmd.Failf("update branch has diverged from main. automated merges won't work until this is fixed. Diff: %+v", strings.Join(output, "\n"))
 		}
 	}
 
@@ -99,7 +99,7 @@ func (cmd *completeUpdateGoDepCmd) Execute() {
 	cmd.RunGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	currentCommit := cmd.GetCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
 	if !isManualCompleteProject() {
-		cmd.RunGitCommand("Checkout master", "checkout", "master")
+		cmd.RunGitCommand("Checkout main", "checkout", "main")
 	} else {
 		cmd.RunGitCommand("Checkout actual branch", "checkout", cmd.GetCurrentBranch())
 	}
@@ -110,7 +110,7 @@ func (cmd *completeUpdateGoDepCmd) Execute() {
 func newCompleteUpdateGoDepCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "complete-update-go-dependency",
-		Short: "Merge a go dependency update to master and push",
+		Short: "Merge a go dependency update to main and push",
 		Args:  cobra.ExactArgs(0),
 	}
 

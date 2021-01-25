@@ -310,7 +310,7 @@ func (cmd *BaseCommand) GetCurrentBranch() string {
 
 func (cmd *BaseCommand) isReleaseBranch() bool {
 	currentBranch := cmd.GetCurrentBranch()
-	return currentBranch == "master" || strings.HasPrefix(currentBranch, "release-v")
+	return currentBranch == "main" || strings.HasPrefix(currentBranch, "release-v")
 }
 
 func (cmd *BaseCommand) getBuildNumber() string {
