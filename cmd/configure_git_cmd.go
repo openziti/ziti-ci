@@ -93,9 +93,18 @@ func (cmd *configureGitCmd) Execute() {
 	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
 	cmd.RunGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
 
+	repo := ""
+	if travisRepoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
+		repo = travisRepoSlug
+	}
+
+	if githubRepo, ok := os.LookupEnv("GITHUB_REPOSITORY"); ok {
+		repo = githubRepo
+	}
+
 	// Ensure we're in ssh mode
-	if repoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
-		url := fmt.Sprintf("git@github.com:%v.git", repoSlug)
+	if repo != "" {
+		url := fmt.Sprintf("git@github.com:%v.git", repo)
 		cmd.RunGitCommand("set remote to ssh", "remote", "set-url", "origin", url)
 	}
 }
