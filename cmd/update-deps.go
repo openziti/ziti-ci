@@ -95,6 +95,8 @@ type completeUpdateGoDepCmd struct {
 }
 
 func (cmd *completeUpdateGoDepCmd) Execute() {
+	updateBranch := cmd.GetCurrentBranch()
+
 	// go get gox or go get jfrog can mess with go.mod since we committed
 	cmd.RunGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 	currentCommit := cmd.GetCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD")
@@ -105,6 +107,7 @@ func (cmd *completeUpdateGoDepCmd) Execute() {
 	}
 	cmd.RunGitCommand("Merge in changes", "merge", "--ff-only", currentCommit)
 	cmd.RunGitCommand("Push to remote", "push")
+	cmd.RunGitCommand("Push update branch ", "push", "origin", updateBranch)
 }
 
 func newCompleteUpdateGoDepCmd(root *RootCommand) *cobra.Command {
