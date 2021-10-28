@@ -1,3 +1,0 @@
-after_success:
-  - ziti-ci configure-git
-  - ziti-ci tag -v -f "$VERSION_FILE"

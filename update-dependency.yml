@@ -1,6 +1,0 @@
-before_script:
-  - ziti-ci configure-git
-  - ziti-ci update-go-dependency
-
-after_success:
-  - ziti-ci complete-update-go-dependency
