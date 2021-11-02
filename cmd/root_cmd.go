@@ -78,7 +78,8 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newPublishToArtifactoryCmd(rootCmd))
 	rootCobraCmd.AddCommand(newPublishToGithubCmd(rootCmd))
 	rootCobraCmd.AddCommand(publish.NewPublishCmd())
-	rootCobraCmd.AddCommand(newGetVersionCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGetCurrentVersionCmd(rootCmd))
+	rootCobraCmd.AddCommand(newGetNextVersionCmd(rootCmd))
 	rootCobraCmd.AddCommand(newGetBranchCmd(rootCmd))
 	rootCobraCmd.AddCommand(newGetReleaseNotesCmd(rootCmd))
 

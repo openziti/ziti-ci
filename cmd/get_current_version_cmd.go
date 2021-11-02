@@ -23,11 +23,11 @@ import (
 	"os"
 )
 
-type getVersionCmd struct {
+type getCurrentVersionCmd struct {
 	BaseCommand
 }
 
-func (cmd *getVersionCmd) Execute() {
+func (cmd *getCurrentVersionCmd) Execute() {
 	cmd.EvalCurrentAndNextVersion()
 
 	headTags := cmd.getVersionList("tag", "--points-at", "HEAD")
@@ -36,21 +36,21 @@ func (cmd *getVersionCmd) Execute() {
 		os.Exit(0)
 	}
 
-	tagVersion := fmt.Sprintf("%v", cmd.NextVersion)
+	tagVersion := fmt.Sprintf("%v", cmd.CurrentVersion)
 	if cmd.isGoLang() {
 		tagVersion = "v" + tagVersion
 	}
 	fmt.Print(tagVersion)
 }
 
-func newGetVersionCmd(root *RootCommand) *cobra.Command {
+func newGetCurrentVersionCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
-		Use:   "get-version",
-		Short: "Print out the version being built. Should be run before tag is actually made",
+		Use:   "get-current-version",
+		Short: "Print out the most recent tag",
 		Args:  cobra.ExactArgs(0),
 	}
 
-	result := &getVersionCmd{
+	result := &getCurrentVersionCmd{
 		BaseCommand: BaseCommand{
 			RootCommand: root,
 			Cmd:         cobraCmd,
