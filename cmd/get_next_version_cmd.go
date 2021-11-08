@@ -30,12 +30,6 @@ type getNextVersionCmd struct {
 func (cmd *getNextVersionCmd) Execute() {
 	cmd.EvalCurrentAndNextVersion()
 
-	headTags := cmd.getVersionList("tag", "--points-at", "HEAD")
-	if len(headTags) > 0 {
-		cmd.Errorf("head already tagged with %+v:\n", headTags)
-		os.Exit(0)
-	}
-
 	tagVersion := fmt.Sprintf("%v", cmd.NextVersion)
 	if cmd.isGoLang() {
 		tagVersion = "v" + tagVersion
