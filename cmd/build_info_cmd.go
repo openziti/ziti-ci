@@ -87,7 +87,7 @@ func (cmd *GoBuildInfoCmd) Execute() {
 		Revision:    cmd.GetCmdOutputOneLine("get git SHA", "git", "rev-parse", "--short=12", "HEAD"),
 		Branch:      cmd.GetCurrentBranch(),
 		BuildUser:   cmd.GetUsername(),
-		BuildDate:   time.Now().Format("2006-01-02 15:04:05"),
+		BuildDate:   time.Now().Format(time.RFC3339),
 	}
 
 	compiledTemplate, err := template.New("buildInfo").Parse(goBuildInfoTemplate)
