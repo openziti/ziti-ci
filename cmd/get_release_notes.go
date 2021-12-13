@@ -31,6 +31,9 @@ type getReleaseNotesCmd struct {
 }
 
 func extractReleaseNotes(changelog string, version string, outfile string) {
+	if strings.HasPrefix(version, "v") {
+		version = version[1:]
+	}
 	file, err := os.Open(changelog)
 	if err != nil {
 		panic(err)
