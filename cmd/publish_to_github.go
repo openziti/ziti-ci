@@ -27,6 +27,7 @@ import (
 
 type publishToGithubCmd struct {
 	BaseCommand
+	name string
 }
 
 type githubArtifact struct {
@@ -38,6 +39,10 @@ type githubArtifact struct {
 }
 
 func (cmd *publishToGithubCmd) Execute() {
+	cmd.name = "ziti"
+	if len(cmd.Args) > 0 {
+		cmd.name = cmd.Args[1]
+	}
 	cmd.EvalCurrentAndNextVersion()
 
 	cmd.runCommand("install github cli", "go", "get", "github.com/cli/cli")
@@ -101,12 +106,12 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	for k, v := range bundleMap {
 		if strings.Contains(k, "windows") {
-			file := fmt.Sprintf("release/ziti-%v-%v.zip", k, version)
+			file := fmt.Sprintf("release/%v-%v-%v.zip", cmd.name, k, version)
 			cmd.Infof("Creating release archive %v\n", file)
 			cmd.zipGhArtifacts(file, v...)
 			releaseArtifacts = append(releaseArtifacts, file)
 		} else {
-			file := fmt.Sprintf("release/ziti-%v-%v.tar.gz", k, version)
+			file := fmt.Sprintf("release/%v-%v-%v.tar.gz", cmd.name, k, version)
 			cmd.Infof("Creating release archive %v\n", file)
 			cmd.tarGzGhArtifacts(file, v...)
 			releaseArtifacts = append(releaseArtifacts, file)
@@ -132,9 +137,9 @@ func (cmd *publishToGithubCmd) Execute() {
 
 func newPublishToGithubCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
-		Use:   "publish-to-github",
+		Use:   "publish-to-github <name>",
 		Short: "Creates archives to be published",
-		Args:  cobra.ExactArgs(0),
+		Args:  cobra.RangeArgs(0, 1),
 	}
 
 	result := &publishToGithubCmd{
