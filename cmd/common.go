@@ -400,10 +400,14 @@ func (cmd *BaseCommand) tarGzArtifacts(archiveFile string, artifacts ...*artifac
 	cmd.tarGz(archiveFile, nameMap)
 }
 
-func (cmd *BaseCommand) tarGzGhArtifacts(archiveFile string, artifacts ...*githubArtifact) {
+func (cmd *BaseCommand) tarGzGhArtifacts(projectName, archiveFile string, artifacts ...*githubArtifact) {
 	nameMap := map[string]string{}
 	for _, artifact := range artifacts {
-		nameMap[artifact.sourcePath] = fmt.Sprintf("ziti/%v", artifact.sourceName)
+		if len(artifacts) > 1 {
+			nameMap[artifact.sourcePath] = fmt.Sprintf("%v/%v", projectName, artifact.sourceName)
+		} else {
+			nameMap[artifact.sourcePath] = artifact.sourceName
+		}
 	}
 	cmd.tarGz(archiveFile, nameMap)
 }
@@ -449,11 +453,16 @@ func (cmd *BaseCommand) tarGz(archiveFile string, nameMap map[string]string) {
 	}
 }
 
-func (cmd *BaseCommand) zipGhArtifacts(archiveFile string, artifacts ...*githubArtifact) {
+func (cmd *BaseCommand) zipGhArtifacts(projectName string, archiveFile string, artifacts ...*githubArtifact) {
 	nameMap := map[string]string{}
 	for _, artifact := range artifacts {
-		nameMap[artifact.sourcePath] = fmt.Sprintf("ziti/%v", artifact.sourceName)
+		if len(artifacts) > 1 {
+			nameMap[artifact.sourcePath] = fmt.Sprintf("%v/%v", projectName, artifact.sourceName)
+		} else {
+			nameMap[artifact.sourcePath] = artifact.sourceName
+		}
 	}
+
 	cmd.zip(archiveFile, nameMap)
 }
 

@@ -28,8 +28,8 @@ func NewPublishCmd() *cobra.Command {
 		Use:   "publish",
 		Short: "Publishes an artifact to an artifact repo",
 		Long:  "Useless on its own. Must be chained to a particular repository to publish",
-		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Help()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
 		},
 	}
 

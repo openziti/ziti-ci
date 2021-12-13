@@ -41,12 +41,9 @@ type githubArtifact struct {
 func (cmd *publishToGithubCmd) Execute() {
 	cmd.name = "ziti"
 	if len(cmd.Args) > 0 {
-		cmd.name = cmd.Args[1]
+		cmd.name = cmd.Args[0]
 	}
 	cmd.EvalCurrentAndNextVersion()
-
-	cmd.runCommand("install github cli", "go", "get", "github.com/cli/cli")
-	cmd.RunGitCommand("Ensure go.mod/go.sum are untouched", "checkout", "--", "go.mod", "go.sum")
 
 	releaseDir, err := filepath.Abs("./release")
 	cmd.exitIfErrf(err, "could not get absolute path for releases directory")
@@ -108,12 +105,12 @@ func (cmd *publishToGithubCmd) Execute() {
 		if strings.Contains(k, "windows") {
 			file := fmt.Sprintf("release/%v-%v-%v.zip", cmd.name, k, version)
 			cmd.Infof("Creating release archive %v\n", file)
-			cmd.zipGhArtifacts(file, v...)
+			cmd.zipGhArtifacts(cmd.name, file, v...)
 			releaseArtifacts = append(releaseArtifacts, file)
 		} else {
 			file := fmt.Sprintf("release/%v-%v-%v.tar.gz", cmd.name, k, version)
 			cmd.Infof("Creating release archive %v\n", file)
-			cmd.tarGzGhArtifacts(file, v...)
+			cmd.tarGzGhArtifacts(cmd.name, file, v...)
 			releaseArtifacts = append(releaseArtifacts, file)
 		}
 	}
@@ -132,7 +129,9 @@ func (cmd *publishToGithubCmd) Execute() {
 		releaseParams = append(releaseParams, releaseArtifact)
 	}
 
-	cmd.runCommand("Create GH Release and publish release artifacts", "gh", releaseParams...)
+	if !cmd.dryRun {
+		cmd.runCommand("Create GH Release and publish release artifacts", "gh", releaseParams...)
+	}
 }
 
 func newPublishToGithubCmd(root *RootCommand) *cobra.Command {

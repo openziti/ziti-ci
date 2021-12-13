@@ -72,7 +72,7 @@ func (cmd *triggerJenkinsSmokeBuildCmd) Execute() {
 		SetQueryParam("branch", cmd.GetCurrentBranch()).
 		SetQueryParam("version", version).
 		SetQueryParam("committer", cmd.getCommitterEmail()).
-		SetQueryParam("cause", fmt.Sprintf("triggered by Travis ziti-cmd build #%v", cmd.getBuildNumber())).
+		SetQueryParam("cause", fmt.Sprintf("triggered by ziti-ci build #%v", cmd.getBuildNumber())).
 		SetBasicAuth(cmd.jenkinsUser, cmd.jenkinsUserToken).
 		Post("https://jenkinstest.tools.netfoundry.io/job/ziti-smoke-test/buildWithParameters")
 
