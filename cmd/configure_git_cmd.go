@@ -105,7 +105,7 @@ func (cmd *configureGitCmd) Execute() {
 		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
 			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
 		}
-		cmd.runGitCommandAlways("import gpg key", "gpg", "--import", "gpg.key")
+		cmd.runCommand("import gpg key", "gpg", "--import", "gpg.key")
 		if err = os.Remove("gpg.key"); err != nil {
 			cmd.Failf("unable to delete gpg.key (%v)", err)
 		}
