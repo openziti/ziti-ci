@@ -26,7 +26,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 	"strings"
 )
 
@@ -96,13 +95,13 @@ func (cmd *configureGitCmd) Execute() {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
 
-	keys := os.Environ()
-	sort.Strings(keys)
-	for _, key := range keys {
-		cmd.Infof("env key: %v\n", key)
-	}
-
 	if val, found := os.LookupEnv(DefaultGpgKeyEnvVar); found && val != "" {
+		if val, found := os.LookupEnv(DefaultGpgKeyIdEnvVar); found && val != "" {
+			cmd.RunGitCommand("set gpg key id", "config", "user.signingkey", val)
+		} else {
+			cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyIdEnvVar, found)
+		}
+
 		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
 			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
 		}
@@ -110,17 +109,11 @@ func (cmd *configureGitCmd) Execute() {
 		if err = os.Remove("gpg.key"); err != nil {
 			cmd.Failf("unable to delete gpg.key (%v)", err)
 		}
-	} else {
-		cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyEnvVar, found)
-	}
+		cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")
 
-	if val, found := os.LookupEnv(DefaultGpgKeyIdEnvVar); found && val != "" {
-		cmd.RunGitCommand("set gpg key id", "config", "user.signingkey", val)
 	} else {
-		cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyIdEnvVar, found)
+		cmd.Warnf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyEnvVar, found)
 	}
-
-	cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
 	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
