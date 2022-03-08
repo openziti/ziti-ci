@@ -44,6 +44,7 @@ func (cmd *configureGitCmd) Execute() {
 		cmd.Warnf("Running in non-openziti context. Not attempting to configure git.\n")
 		return
 	}
+
 	cmd.Infof("running in openziti context, configuring git\n")
 	if val, found := os.LookupEnv(cmd.sshKeyEnv); found && val != "" {
 		sshKey, err := base64.StdEncoding.DecodeString(val)
@@ -93,6 +94,26 @@ func (cmd *configureGitCmd) Execute() {
 	} else {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
+
+	if val, found := os.LookupEnv("ZITI_CI_GPG_KEY"); found && val != "" {
+		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
+			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
+		}
+		cmd.runGitCommandAlways("import gpg key", "gpg", "--import", "gpg.key")
+		if err = os.Remove("gpg.key"); err != nil {
+			cmd.Failf("unable to delete gpg.key (%v)", err)
+		}
+	} else {
+		cmd.Failf("unable to read gpg key from env var ZITI_CI_GPG_KEY. Found? %v\n", found)
+	}
+
+	if val, found := os.LookupEnv("ZITI_CI_GPG_KEY_ID"); found && val != "" {
+		cmd.RunGitCommand("set gpg key id", "config", "user.signingkey", val)
+	} else {
+		cmd.Failf("unable to read gpg key from env var ZITI_CI_GPG_KEY_ID. Found? %v\n", found)
+	}
+
+	cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
 	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
