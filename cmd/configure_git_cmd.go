@@ -26,6 +26,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -95,8 +96,10 @@ func (cmd *configureGitCmd) Execute() {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
 
-	for _, key := range os.Environ() {
-		cmd.Infof("env key: %v", key)
+	keys := os.Environ()
+	sort.Strings(keys)
+	for _, key := range keys {
+		cmd.Infof("env key: %v\n", key)
 	}
 
 	if val, found := os.LookupEnv(DefaultGpgKeyEnvVar); found && val != "" {
