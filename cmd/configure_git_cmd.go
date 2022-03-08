@@ -95,7 +95,7 @@ func (cmd *configureGitCmd) Execute() {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
 
-	if val, found := os.LookupEnv("ZITI_CI_GPG_KEY"); found && val != "" {
+	if val, found := os.LookupEnv(DefaultGpgKeyEnvVar); found && val != "" {
 		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
 			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
 		}
@@ -104,13 +104,13 @@ func (cmd *configureGitCmd) Execute() {
 			cmd.Failf("unable to delete gpg.key (%v)", err)
 		}
 	} else {
-		cmd.Failf("unable to read gpg key from env var ZITI_CI_GPG_KEY. Found? %v\n", found)
+		cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyEnvVar, found)
 	}
 
-	if val, found := os.LookupEnv("ZITI_CI_GPG_KEY_ID"); found && val != "" {
+	if val, found := os.LookupEnv(DefaultGpgKeyIdEnvVar); found && val != "" {
 		cmd.RunGitCommand("set gpg key id", "config", "user.signingkey", val)
 	} else {
-		cmd.Failf("unable to read gpg key from env var ZITI_CI_GPG_KEY_ID. Found? %v\n", found)
+		cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyIdEnvVar, found)
 	}
 
 	cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")

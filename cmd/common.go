@@ -37,10 +37,12 @@ import (
 )
 
 const (
-	DefaultGitUsername  = "ziti-ci"
-	DefaultGitEmail     = "ziti-ci@netfoundry.io"
-	DefaultSshKeyEnvVar = "gh_ci_key"
-	DefaultSshKeyFile   = "github_deploy_key"
+	DefaultGitUsername    = "ziti-ci"
+	DefaultGitEmail       = "ziti-ci@netfoundry.io"
+	DefaultSshKeyEnvVar   = "gh_ci_key"
+	DefaultGpgKeyEnvVar   = "ziti_ci_gpg_key"
+	DefaultGpgKeyIdEnvVar = "ziti_ci_gpg_key_id"
+	DefaultSshKeyFile     = "github_deploy_key"
 )
 
 type CiCmd interface {
