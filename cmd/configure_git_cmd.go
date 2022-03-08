@@ -95,6 +95,10 @@ func (cmd *configureGitCmd) Execute() {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
 	}
 
+	for _, key := range os.Environ() {
+		cmd.Infof("env key: %v", key)
+	}
+
 	if val, found := os.LookupEnv(DefaultGpgKeyEnvVar); found && val != "" {
 		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
 			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
