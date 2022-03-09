@@ -109,6 +109,7 @@ func (cmd *configureGitCmd) Execute() {
 		if err = os.Remove("gpg.key"); err != nil {
 			cmd.Failf("unable to delete gpg.key (%v)", err)
 		}
+		cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")
 		cmd.RunGitCommand("require gpg signed tags", "config", "tag.gpgSign", "true")
 
 	} else {
