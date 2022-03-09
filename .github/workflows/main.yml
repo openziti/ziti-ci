@@ -25,10 +25,10 @@ jobs:
         run: |
           mkdir -p tmp
           go build -o tmp ./...
+          ./tmp/ziti-ci configure-git
           ./tmp/ziti-ci generate-build-info cmd/build_info.go cmd
           go build -o tmp ./...
           echo "ZITI_CI_VERSION=$(./tmp/ziti-ci get-next-version -q)" >> $GITHUB_ENV
-          ./tmp/ziti-ci configure-git
           ./tmp/ziti-ci tag -v -f version
 
       - name: Publish
