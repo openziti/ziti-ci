@@ -1,4 +1,4 @@
-name: build
+name: release
 
 on:
   push:
@@ -29,24 +29,14 @@ jobs:
           ./tmp/ziti-ci configure-git
           ./tmp/ziti-ci tag -v -f version
 
-      - name: Publish
+      - name: Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        uses: softprops/action-gh-release@v1
         with:
+          name: Release ${{ env.ZITI_CI_VERSION }}
           tag_name: ${{ env.ZITI_CI_VERSION }}
-          release_name: Release ${{ env.ZITI_CI_VERSION }}
+          files: ./tmp/ziti-ci/ziti-ci
           draft: false
           prerelease: false
-
-      - name: Upload Ziti CI
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./tmp/ziti-ci
-          asset_name: ziti-ci
-          asset_content_type: application/octet-stream
+          fail_on_unmatched_files: true
+          # token: ${{ secrets.GITHUB_TOKEN }} # this Action defaults to github.token

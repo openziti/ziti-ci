@@ -2,7 +2,7 @@ if: tag IS blank
 
 branches:
   only:
-    - master
+    - main
     - /release-.*\.x/
     - release-next
     - update-dependency
