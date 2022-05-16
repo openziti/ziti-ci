@@ -118,7 +118,7 @@ func (cmd *publishToArtifactoryCmd) Execute() {
 		}
 		props := fmt.Sprintf("version=%v;name=%v;arch=%v;os=%v;branch=%v", version, artifact.name, artifact.arch, artifact.os, cmd.GetCurrentBranch())
 		cmd.runCommand(fmt.Sprintf("Publish artifact for %v", artifact.name),
-			"jfrog-cli", "rt", "u", artifact.artifactPath, dest,
+			"jfrog", "rt", "u", artifact.artifactPath, dest,
 			"--apikey", jfrogApiKey,
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
@@ -130,15 +130,15 @@ func (cmd *publishToArtifactoryCmd) Execute() {
 		dest := fmt.Sprintf("ziti-staging/ziti-all/%v/ziti-all.%v.tar.gz", version, version)
 		props := fmt.Sprintf("version=%v;branch=%v", version, cmd.GetCurrentBranch())
 		cmd.runCommand("Publish artifact for ziti-all",
-			"jfrog-cli", "rt", "u", zitiAllPath, dest,
+			"jfrog", "rt", "u", zitiAllPath, dest,
 			"--apikey", jfrogApiKey,
 			"--url", "https://netfoundry.jfrog.io/netfoundry",
 			"--props", props,
 			"--build-name=ziti",
 			"--build-number="+cmd.getPublishVersion().String())
 
-		cmd.runCommand("Set build version", "jfrog-cli", "rt", "bce", "ziti", version)
-		cmd.runCommand("Create build in Artifactory", "jfrog-cli", "rt", "bp",
+		cmd.runCommand("Set build version", "jfrog", "rt", "bce", "ziti", version)
+		cmd.runCommand("Create build in Artifactory", "jfrog", "rt", "bp",
 			"--apikey", jfrogApiKey, "--url", "https://netfoundry.jfrog.io/netfoundry", "ziti", version)
 	}
 }
