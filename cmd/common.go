@@ -148,10 +148,16 @@ func (cmd *BaseCommand) EvalCurrentAndNextVersion() {
 		}
 	}
 
-	if cmd.CurrentVersion != nil {
-		cmd.NextVersion = getNext(Patch, cmd.CurrentVersion)
-	} else {
+	if cmd.CurrentVersion == nil {
 		cmd.NextVersion = min
+
+		for _, v := range versions {
+			if (cmd.CurrentVersion == nil || cmd.CurrentVersion.LessThan(v)) && v.LessThan(max) {
+				cmd.CurrentVersion = v
+			}
+		}
+	} else {
+		cmd.NextVersion = getNext(Patch, cmd.CurrentVersion)
 	}
 
 	if cmd.NextVersion.LessThan(cmd.BaseVersion) {
