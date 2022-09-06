@@ -74,14 +74,14 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 			project := strings.Split(m.Mod.Path, "/")[2]
 			prev, found := oldVersions[m.Mod.Path]
 			if !found {
-				fmt.Printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
+				fmt.Printf("* `%v`: `%v` (new)\n", m.Mod.Path, m.Mod.Version)
 			} else if m.Mod.Version != prev.Mod.Version {
-				fmt.Printf("* %v: %v -> %v [View commits](https://github.com/openziti/%v/compare/%v...%v)\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
+				fmt.Printf("* `%v`: `%v` -> `%v` [View commits](https://github.com/openziti/%v/compare/%v...%v)\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
 				if err = cmd.GetChanges(project, prev.Mod.Version, m.Mod.Version); err != nil {
 					panic(err)
 				}
 			} else if cmd.ShowUnchanged {
-				fmt.Printf("* %v: %v (unchanged)\n", m.Mod.Path, m.Mod.Version)
+				fmt.Printf("* `%v`: `%v` (unchanged)\n", m.Mod.Path, m.Mod.Version)
 			}
 		}
 	}
