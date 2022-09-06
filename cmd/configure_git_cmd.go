@@ -85,11 +85,11 @@ func (cmd *configureGitCmd) Execute() {
 		f, err := os.OpenFile(keyDir+string(os.PathSeparator)+".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			cmd.Failf("could not write to .gitignore\n", err)
+			cmd.Failf("could not write to .gitignore (%v)\n", err)
 		}
 		defer f.Close()
 		if _, err := f.WriteString("\n" + cmd.sshKeyFile + "\n"); err != nil {
-			cmd.Failf("error writing to .gitignore\n", err)
+			cmd.Failf("error writing to .gitignore (%v)\n", err)
 		}
 	} else {
 		cmd.Infof(".gitignore file already contains entry for %v\n", cmd.sshKeyFile)
@@ -102,12 +102,12 @@ func (cmd *configureGitCmd) Execute() {
 			cmd.Failf("unable to read gpg key from env var %v. Found? %v\n", DefaultGpgKeyIdEnvVar, found)
 		}
 
-		if err = ioutil.WriteFile("gpg.key", []byte(val), 0600); err != nil {
-			cmd.Failf("unable to write gpg key file gpg.key. err: %v\n", cmd.sshKeyFile, err)
+		if err = os.WriteFile("gpg.key", []byte(val), 0600); err != nil {
+			cmd.Failf("unable to write gpg key file [%v]. err: (%v)\n", cmd.sshKeyFile, err)
 		}
 		cmd.runCommand("import gpg key", "gpg", "--import", "gpg.key")
 		if err = os.Remove("gpg.key"); err != nil {
-			cmd.Failf("unable to delete gpg.key (%v)", err)
+			cmd.Failf("unable to delete gpg.key (%v)\n", err)
 		}
 		cmd.RunGitCommand("require gpg signed commit", "config", "commit.gpgsign", "true")
 		cmd.RunGitCommand("require gpg signed tags", "config", "tag.gpgSign", "true")

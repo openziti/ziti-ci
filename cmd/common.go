@@ -93,7 +93,7 @@ func (cmd *BaseCommand) Warnf(format string, params ...interface{}) {
 
 func (cmd *BaseCommand) exitIfErrf(err error, format string, params ...interface{}) {
 	if err != nil {
-		cmd.Failf(format, params)
+		cmd.Failf(format, params...)
 	}
 }
 
@@ -182,7 +182,9 @@ func (cmd *BaseCommand) runGitCommandOptional(description string, dryRun bool, p
 	if !dryRun {
 		gitCmd := exec.Command("git", params...)
 		gitCmd.Stderr = os.Stderr
-		gitCmd.Stdout = os.Stdout
+		if !cmd.quiet {
+			gitCmd.Stdout = os.Stdout
+		}
 		if err := gitCmd.Run(); err != nil {
 			cmd.Failf("error %v: %v\n", description, err)
 		}
