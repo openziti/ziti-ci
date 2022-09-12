@@ -85,6 +85,13 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 			}
 		}
 	}
+
+	fmt.Printf("* `%v`: `%v` -> `%v` [View commits](https://github.com/openziti/ziti/compare/%v...%v)\n",
+		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
+	if err = cmd.GetChanges("ziti", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
+		panic(err)
+	}
+
 }
 
 func (cmd *buildReleaseNotesCmd) GetChanges(project string, oldVersion string, newVersion string) error {
@@ -142,12 +149,34 @@ func (cmd *buildReleaseNotesCmd) GetChanges(project string, oldVersion string, n
 	}
 
 	// The old tag may be a tag commit not in the main-line, so we'll have to find the parent
-	if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
-		c, err := tagCommit.Parent(0)
+	if project == "ziti" {
+		if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
+			tagCommit, err = tagCommit.Parent(0)
+			if err != nil {
+				return err
+			}
+		}
+		// find first non-merge commit
+		for tagCommit.NumParents() > 1 {
+			var parent *object.Commit
+			err = tagCommit.Parents().ForEach(func(commit *object.Commit) error {
+				if parent == nil || commit.Author.When.After(parent.Author.When) {
+					parent = commit
+				}
+				return nil
+			})
+			if err != nil {
+				panic(err)
+			}
+			tagCommit = parent
+		}
+		oldTagHash = &tagCommit.Hash
+	} else if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
+		tagCommit, err = tagCommit.Parent(0)
 		if err != nil {
 			return err
 		}
-		oldTagHash = &c.Hash
+		oldTagHash = &tagCommit.Hash
 	}
 
 	iter, err := r.Log(&git.LogOptions{Order: git.LogOrderCommitterTime, From: *newTagHash})
