@@ -27,7 +27,8 @@ import (
 type langType int
 
 const (
-	LangGo langType = 1
+	LangGo   langType = 1
+	LangJava langType = 2
 )
 
 var RootCmd = newRootCommand()
@@ -59,7 +60,7 @@ func newRootCommand() *RootCommand {
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.verbose, "verbose", "v", false, "enable verbose output")
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.quiet, "quiet", "q", false, "disable informational output")
 	cobraCmd.PersistentFlags().BoolVarP(&rootCmd.dryRun, "dry-run", "d", false, "do a dry run")
-	cobraCmd.PersistentFlags().StringVarP(&rootCmd.langName, "language", "l", "go", "enable language specific settings. Valid values: [go]")
+	cobraCmd.PersistentFlags().StringVarP(&rootCmd.langName, "language", "l", "go", "enable language specific settings. Valid values: [go,java]")
 
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionString, "base-version", "b", "", "set base version")
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")

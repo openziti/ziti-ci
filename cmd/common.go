@@ -114,6 +114,8 @@ func (cmd *BaseCommand) setLangType() {
 	}
 	if strings.EqualFold("go", cmd.langName) {
 		cmd.lang = LangGo
+	} else if strings.EqualFold("java", cmd.langName) {
+		cmd.lang = LangJava
 	} else {
 		cmd.Failf("unsupported language: '%v'\n", cmd.langName)
 	}
