@@ -25,10 +25,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 	"io"
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -38,12 +40,52 @@ type buildReleaseNotesCmd struct {
 	ShowUnchanged bool
 }
 
+func (cmd *buildReleaseNotesCmd) getUnversionedPath(m module.Version) string {
+	parts := strings.Split(m.Path, "/")
+	lastElement := parts[len(parts)-1]
+	match, err := regexp.Match(`v(\d+)`, []byte(lastElement))
+	if err != nil {
+		panic(err)
+	}
+	if match {
+		return strings.Join(parts[:len(parts)-1], "/")
+	}
+	return m.Path
+}
+
+func (cmd *buildReleaseNotesCmd) getPreviousVersion(path string) *string {
+	parts := strings.Split(path, "/")
+	lastElement := parts[len(parts)-1]
+	match, err := regexp.Match(`v(\d+)`, []byte(lastElement))
+	if err != nil {
+		panic(err)
+	}
+	if match {
+		base := strings.Join(parts[:len(parts)-1], "/")
+		versionStr := lastElement[1:]
+		version, err := strconv.Atoi(versionStr)
+		if err != nil {
+			panic(err)
+		}
+		if version == 2 {
+			return &base
+		}
+		base = fmt.Sprintf("%v/v%v", base, version-1)
+		return &base
+	}
+	return nil
+}
+
 func (cmd *buildReleaseNotesCmd) Execute() {
 	if !cmd.RootCobraCmd.Flags().Changed("quiet") {
 		cmd.quiet = true
 	}
 
 	cmd.EvalCurrentAndNextVersion()
+	if !cmd.quiet {
+		fmt.Printf("Release notes %v -> %v\n", cmd.CurrentVersion, cmd.NextVersion)
+	}
+
 	data, err := os.ReadFile("go.mod")
 	if err != nil {
 		panic(err)
@@ -74,6 +116,17 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 			project := strings.Split(m.Mod.Path, "/")[2]
 			prev, found := oldVersions[m.Mod.Path]
 			if !found {
+				path := m.Mod.Path
+				prevVersion := cmd.getPreviousVersion(path)
+				for prevVersion != nil {
+					prev, found = oldVersions[*prevVersion]
+					if found {
+						break
+					}
+					prevVersion = cmd.getPreviousVersion(*prevVersion)
+				}
+			}
+			if !found {
 				fmt.Printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
 			} else if m.Mod.Version != prev.Mod.Version {
 				fmt.Printf("* %v: [%v -> %v](https://github.com/openziti/%v/compare/%v...%v)\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
@@ -86,7 +139,7 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 		}
 	}
 
-	fmt.Printf("* %v: [%v -> %v](https://github.com/openziti/ziti/compare/%v...%v)\n",
+	fmt.Printf("* %v: [v%v -> v%v](https://github.com/openziti/ziti/compare/v%v...v%v)\n",
 		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
 	if err = cmd.GetChanges("ziti", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
 		panic(err)
