@@ -52,7 +52,7 @@ func (cmd *updateGoDepCmd) Execute() {
 	}
 	_, _ = fmt.Fprintf(cmd.Cmd.OutOrStdout(), "attempting to update to %v\n", dep)
 
-	cmd.runCommand("Tidy go.sum", "go", "mod", "tidy", "--go=1.18")
+	cmd.runCommand("Tidy go.sum", "go", "mod", "tidy", "--go=1.19")
 	cmd.RunGitCommand("Add go mod changes", "add", "go.mod", "go.sum")
 	cmd.RunGitCommand("Commit go.mod changes", "commit", "-m", fmt.Sprintf("Updating dependency %v", dep))
 }
