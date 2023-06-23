@@ -20,14 +20,15 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
 
 type publishToGithubCmd struct {
 	BaseCommand
-	name string
+	name        string
+	archiveBase string
 }
 
 type githubArtifact struct {
@@ -43,12 +44,17 @@ func (cmd *publishToGithubCmd) Execute() {
 	if len(cmd.Args) > 0 {
 		cmd.name = cmd.Args[0]
 	}
+
+	if !cmd.Cmd.Flags().Changed("archive-base") {
+		cmd.archiveBase = cmd.name
+	}
+
 	cmd.EvalCurrentAndNextVersion()
 
 	releaseDir, err := filepath.Abs("./release")
 	cmd.exitIfErrf(err, "could not get absolute path for releases directory")
 
-	archDirs, err := ioutil.ReadDir(releaseDir)
+	archDirs, err := os.ReadDir(releaseDir)
 	cmd.exitIfErrf(err, "failed to read releases dir: %v\n", err)
 	var artifacts []*githubArtifact
 	for _, archDir := range archDirs {
@@ -57,15 +63,15 @@ func (cmd *publishToGithubCmd) Execute() {
 		archDirPath := filepath.Join(releaseDir, archDir.Name())
 
 		if archDir.IsDir() {
-			osDirs, err := ioutil.ReadDir(archDirPath)
+			osDirs, err := os.ReadDir(archDirPath)
 			cmd.exitIfErrf(err, "failed to read arch dir %v: %v\n", archDirPath, err)
 
 			for _, osDir := range osDirs {
-				os := osDir.Name()
-				cmd.Infof("processing files for: %v/%v\n", arch, os)
+				osName := osDir.Name()
+				cmd.Infof("processing files for: %v/%v\n", arch, osName)
 
 				osDirPath := filepath.Join(archDirPath, osDir.Name())
-				releasableFiles, err := ioutil.ReadDir(osDirPath)
+				releasableFiles, err := os.ReadDir(osDirPath)
 				cmd.exitIfErrf(err, "failed to read os dir %v: %v\n", osDirPath, err)
 
 				for _, releasableFile := range releasableFiles {
@@ -80,7 +86,7 @@ func (cmd *publishToGithubCmd) Execute() {
 							sourceName: releasableFile.Name(),
 							sourcePath: filePath,
 							arch:       arch,
-							os:         os,
+							os:         osName,
 						})
 					}
 				}
@@ -147,6 +153,8 @@ func newPublishToGithubCmd(root *RootCommand) *cobra.Command {
 			Cmd:         cobraCmd,
 		},
 	}
+
+	cobraCmd.Flags().StringVar(&result.archiveBase, "archive-base", "", "Directory to store release files in archives defaults to project name if not specified. May be set to blank.")
 
 	return Finalize(result)
 }
