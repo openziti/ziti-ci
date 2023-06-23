@@ -20,9 +20,9 @@
 package cmd
 
 const (
-	Version   = "v0.3.11"
-	Revision  = "169c17d6f16f"
+	Version   = "v0.5.104"
+	Revision  = "5c1c46429e87"
 	Branch    = "v1"
-	BuildUser = "Paul Lorenz"
-	BuildDate = "2020-02-10 14:50:41"
+	BuildUser = ""
+	BuildDate = "2023-06-23T02:20:30Z"
 )
