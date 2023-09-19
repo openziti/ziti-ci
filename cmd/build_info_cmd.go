@@ -67,7 +67,7 @@ type GoBuildInfo struct {
 type GoBuildInfoCmd struct {
 	BaseCommand
 
-	useV bool
+	useV          bool
 	noAddNoCommit bool
 }
 

@@ -18,7 +18,7 @@
 package artifactory
 
 import (
-"github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 var m = MavenLayout{}
@@ -28,7 +28,7 @@ func NewPublishArtifactoryCmd() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "artifactory",
 		Short: "Publishes an artifact to an artifactory",
-		Long:  "Expects a maven-style repository to be specified. Defaults to " + DefaultRepo + " if not specified. " +
+		Long: "Expects a maven-style repository to be specified. Defaults to " + DefaultRepo + " if not specified. " +
 			"Supports -SNAPSHOT versions to be specified",
 		Run: func(cmd *cobra.Command, args []string) {
 			m.Publish()

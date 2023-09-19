@@ -163,7 +163,7 @@ func (cmd *buildReleaseNotesCmd) GetChanges(project string, oldVersion string, n
 		return errors.Wrapf(err, "")
 	}
 
-	cmd.runCommand("fetch latest tags", "git", "fetch", "--tags")
+	cmd.runGitCommandAlways("fetch latest tags", "fetch", "--tags")
 
 	r, err := git.PlainOpen(".")
 	if err != nil {
