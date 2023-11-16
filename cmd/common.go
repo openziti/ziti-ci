@@ -183,8 +183,8 @@ func (cmd *BaseCommand) runGitCommandOptional(description string, dryRun bool, p
 	cmd.Infof("%v: git %v \n", description, strings.Join(params, " "))
 	if !dryRun {
 		gitCmd := exec.Command("git", params...)
-		gitCmd.Stderr = os.Stderr
 		if !cmd.quiet {
+			gitCmd.Stderr = os.Stderr
 			gitCmd.Stdout = os.Stdout
 		}
 		if err := gitCmd.Run(); err != nil {
@@ -214,13 +214,14 @@ func (cmd *BaseCommand) getGoEnv() map[string]string {
 func (cmd *BaseCommand) runCommandWithOutput(description string, name string, params ...string) []string {
 	cmd.Infof("%v: %v %v\n", description, name, strings.Join(params, " "))
 	command := exec.Command(name, params...)
-	command.Stderr = os.Stderr
-	output, err := command.Output()
-	if err != nil {
+	command.Stderr = nil
+	output := &bytes.Buffer{}
+	command.Stdout = output
+	if err := command.Run(); err != nil {
 		cmd.Failf("error %v: %v\n", description, err)
 	}
 
-	stringData := strings.Replace(string(output), "\r\n", "\n", -1)
+	stringData := strings.Replace(output.String(), "\r\n", "\n", -1)
 	lines := strings.Split(stringData, "\n")
 	var result []string
 	for _, line := range lines {
@@ -265,9 +266,11 @@ func (cmd *BaseCommand) getVersionList(params ...string) []*version.Version {
 			}
 			continue
 		}
-		versions = append(versions, v)
-		if cmd.verbose {
-			cmd.Infof("found version %v\n", v)
+		if v.Prerelease() == "" && v.Metadata() == "" {
+			versions = append(versions, v)
+			if cmd.verbose {
+				cmd.Infof("found version %v\n", v)
+			}
 		}
 	}
 	sort.Sort(versionList(versions))
