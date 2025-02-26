@@ -18,11 +18,14 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 type publishToGithubCmd struct {
@@ -156,6 +159,30 @@ func (cmd *publishToGithubCmd) Execute() {
 	for _, artifact := range nonExecutableArtifacts {
 		releaseArtifacts = append(releaseArtifacts, artifact.sourcePath)
 	}
+
+	// Generate checksums file
+	checksumFile := filepath.Join(releaseDir, "checksums.sha256.txt")
+	checksumWriter, err := os.Create(checksumFile)
+	cmd.exitIfErrf(err, "failed to create checksums file: %v\n", err)
+	defer checksumWriter.Close()
+
+	// Calculate checksums for all artifacts
+	for _, artifactPath := range releaseArtifacts {
+		data, err := os.ReadFile(artifactPath)
+		cmd.exitIfErrf(err, "failed to read artifact for checksum: %v\n", err)
+
+		hash := sha256.Sum256(data)
+		hexHash := hex.EncodeToString(hash[:])
+
+		// Use just the filename for the checksum file
+		relPath := filepath.Base(artifactPath)
+
+		_, err = fmt.Fprintf(checksumWriter, "%s  %s\n", hexHash, relPath)
+		cmd.exitIfErrf(err, "failed to write checksum: %v\n", err)
+	}
+
+	// Add checksums file to release artifacts
+	releaseArtifacts = append(releaseArtifacts, checksumFile)
 
 	releaseNotesFile := fmt.Sprintf("changelog-%v.md", version)
 	extractReleaseNotes("CHANGELOG.md", version, releaseNotesFile)
