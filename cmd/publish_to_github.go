@@ -81,11 +81,10 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	// walk architecture specific subdirs for executables
 	for _, archDir := range archDirs {
-		arch := archDir.Name()
-		cmd.Infof("processing files for arch: %v\n", arch)
-		archDirPath := filepath.Join(releaseDir, archDir.Name())
-
 		if archDir.IsDir() {
+			arch := archDir.Name()
+			cmd.Infof("processing files for arch: %v\n", arch)
+			archDirPath := filepath.Join(releaseDir, archDir.Name())
 			osDirs, err := os.ReadDir(archDirPath)
 			cmd.exitIfErrf(err, "failed to read arch dir %v: %v\n", archDirPath, err)
 
@@ -153,7 +152,7 @@ func (cmd *publishToGithubCmd) Execute() {
 		}
 	}
 
-	// Add top-level non-executable artifacts directly to release artifacts
+	// Add non-executable artifacts to release artifacts
 	for _, artifact := range nonExecutableArtifacts {
 		releaseArtifacts = append(releaseArtifacts, artifact.sourcePath)
 	}
@@ -184,6 +183,7 @@ func (cmd *publishToGithubCmd) Execute() {
 func newPublishToGithubCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "publish-to-github <name>",
+
 		Short: "Creates archives to be published",
 		Args:  cobra.RangeArgs(0, 1),
 	}
