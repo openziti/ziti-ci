@@ -118,7 +118,12 @@ func (cmd *configureGitCmd) Execute() {
 
 	cmd.RunGitCommand("set git username", "config", "user.name", cmd.gitUsername)
 	cmd.RunGitCommand("set git password", "config", "user.email", cmd.gitEmail)
-	cmd.RunGitCommand("set ssh config", "config", "core.sshCommand", fmt.Sprintf("ssh -i %v", cmd.sshKeyFile))
+
+	sshCmd := fmt.Sprintf("ssh -i %v", cmd.sshKeyFile)
+	if _, err := os.Stat(".github/known_hosts"); err == nil {
+		sshCmd += " -o UserKnownHostsFile=.github/known_hosts"
+	}
+	cmd.RunGitCommand("set ssh config", "config", "core.sshCommand", sshCmd)
 
 	repo := ""
 	if travisRepoSlug, ok := os.LookupEnv("TRAVIS_REPO_SLUG"); ok {
