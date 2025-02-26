@@ -57,7 +57,8 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	archDirs, err := os.ReadDir(releaseDir)
 	cmd.exitIfErrf(err, "failed to read releases dir: %v\n", err)
-	var artifacts []*githubArtifact
+	var executableArtifacts []*githubArtifact
+	var nonExecutableArtifacts []*githubArtifact
 
 	// Process top-level files in release directory first
 	topLevelFiles, err := os.ReadDir(releaseDir)
@@ -69,7 +70,7 @@ func (cmd *publishToGithubCmd) Execute() {
 				(strings.HasPrefix(name, "source-") && strings.HasSuffix(name, ".tar.gz")) ||
 				(strings.HasPrefix(name, "sbom-") && strings.HasSuffix(name, ".spdx.json")) {
 				filePath := filepath.Join(releaseDir, name)
-				artifacts = append(artifacts, &githubArtifact{
+				nonExecutableArtifacts = append(nonExecutableArtifacts, &githubArtifact{
 					name:       name,
 					sourceName: name,
 					sourcePath: filePath,
@@ -103,7 +104,15 @@ func (cmd *publishToGithubCmd) Execute() {
 							name = strings.TrimSuffix(name, ".exe")
 						}
 						filePath := filepath.Join(osDirPath, releasableFile.Name())
-						artifacts = append(artifacts, &githubArtifact{
+
+						// Set execute permissions on non-Windows executable files
+						if !strings.HasSuffix(releasableFile.Name(), ".exe") {
+							if err := os.Chmod(filePath, 0755); err != nil {
+								cmd.exitIfErrf(err, "failed to set execute permissions on %v: %v\n", filePath, err)
+							}
+						}
+
+						executableArtifacts = append(executableArtifacts, &githubArtifact{
 							name:       name,
 							sourceName: releasableFile.Name(),
 							sourcePath: filePath,
@@ -118,7 +127,7 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	bundleMap := map[string][]*githubArtifact{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range executableArtifacts {
 		bundle := artifact.os + "-" + artifact.arch
 		list := bundleMap[bundle]
 		list = append(list, artifact)
@@ -129,6 +138,7 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	var releaseArtifacts []string
 
+	// Process architecture-specific executables' bundles
 	for k, v := range bundleMap {
 		if strings.Contains(k, "windows") {
 			file := fmt.Sprintf("release/%v-%v-%v.zip", cmd.name, k, version)
@@ -141,6 +151,11 @@ func (cmd *publishToGithubCmd) Execute() {
 			cmd.tarGzGhArtifacts(cmd.name, file, v...)
 			releaseArtifacts = append(releaseArtifacts, file)
 		}
+	}
+
+	// Add top-level non-executable artifacts directly to release artifacts
+	for _, artifact := range nonExecutableArtifacts {
+		releaseArtifacts = append(releaseArtifacts, artifact.sourcePath)
 	}
 
 	releaseNotesFile := fmt.Sprintf("changelog-%v.md", version)
