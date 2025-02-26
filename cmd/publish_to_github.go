@@ -58,6 +58,27 @@ func (cmd *publishToGithubCmd) Execute() {
 	archDirs, err := os.ReadDir(releaseDir)
 	cmd.exitIfErrf(err, "failed to read releases dir: %v\n", err)
 	var artifacts []*githubArtifact
+
+	// Process top-level files in release directory first
+	topLevelFiles, err := os.ReadDir(releaseDir)
+	cmd.exitIfErrf(err, "failed to read top-level files in release dir: %v\n", err)
+	for _, file := range topLevelFiles {
+		if !file.IsDir() {
+			name := file.Name()
+			if name == "checksums.sha256.txt" ||
+				(strings.HasPrefix(name, "source-") && strings.HasSuffix(name, ".tar.gz")) ||
+				(strings.HasPrefix(name, "sbom-") && strings.HasSuffix(name, ".spdx.json")) {
+				filePath := filepath.Join(releaseDir, name)
+				artifacts = append(artifacts, &githubArtifact{
+					name:       name,
+					sourceName: name,
+					sourcePath: filePath,
+				})
+			}
+		}
+	}
+
+	// walk architecture specific subdirs for executables
 	for _, archDir := range archDirs {
 		arch := archDir.Name()
 		cmd.Infof("processing files for arch: %v\n", arch)
