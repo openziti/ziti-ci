@@ -18,11 +18,14 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 type publishToGithubCmd struct {
@@ -57,13 +60,33 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	archDirs, err := os.ReadDir(releaseDir)
 	cmd.exitIfErrf(err, "failed to read releases dir: %v\n", err)
-	var artifacts []*githubArtifact
-	for _, archDir := range archDirs {
-		arch := archDir.Name()
-		cmd.Infof("processing files for arch: %v\n", arch)
-		archDirPath := filepath.Join(releaseDir, archDir.Name())
+	var executableArtifacts []*githubArtifact
+	var nonExecutableArtifacts []*githubArtifact
 
+	// Process top-level files in release directory first
+	topLevelFiles, err := os.ReadDir(releaseDir)
+	cmd.exitIfErrf(err, "failed to read top-level files in release dir: %v\n", err)
+	for _, file := range topLevelFiles {
+		if !file.IsDir() {
+			name := file.Name()
+			if (strings.HasPrefix(name, "source-") && strings.HasSuffix(name, ".tar.gz")) ||
+				(strings.HasPrefix(name, "sbom-") && strings.HasSuffix(name, ".spdx.json")) {
+				filePath := filepath.Join(releaseDir, name)
+				nonExecutableArtifacts = append(nonExecutableArtifacts, &githubArtifact{
+					name:       name,
+					sourceName: name,
+					sourcePath: filePath,
+				})
+			}
+		}
+	}
+
+	// walk architecture specific subdirs for executables
+	for _, archDir := range archDirs {
 		if archDir.IsDir() {
+			arch := archDir.Name()
+			cmd.Infof("processing files for arch: %v\n", arch)
+			archDirPath := filepath.Join(releaseDir, archDir.Name())
 			osDirs, err := os.ReadDir(archDirPath)
 			cmd.exitIfErrf(err, "failed to read arch dir %v: %v\n", archDirPath, err)
 
@@ -82,7 +105,15 @@ func (cmd *publishToGithubCmd) Execute() {
 							name = strings.TrimSuffix(name, ".exe")
 						}
 						filePath := filepath.Join(osDirPath, releasableFile.Name())
-						artifacts = append(artifacts, &githubArtifact{
+
+						// Set execute permissions on non-Windows executable files
+						if !strings.HasSuffix(releasableFile.Name(), ".exe") {
+							if err := os.Chmod(filePath, 0755); err != nil {
+								cmd.exitIfErrf(err, "failed to set execute permissions on %v: %v\n", filePath, err)
+							}
+						}
+
+						executableArtifacts = append(executableArtifacts, &githubArtifact{
 							name:       name,
 							sourceName: releasableFile.Name(),
 							sourcePath: filePath,
@@ -97,7 +128,7 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	bundleMap := map[string][]*githubArtifact{}
 
-	for _, artifact := range artifacts {
+	for _, artifact := range executableArtifacts {
 		bundle := artifact.os + "-" + artifact.arch
 		list := bundleMap[bundle]
 		list = append(list, artifact)
@@ -108,6 +139,7 @@ func (cmd *publishToGithubCmd) Execute() {
 
 	var releaseArtifacts []string
 
+	// Process architecture-specific executables' bundles
 	for k, v := range bundleMap {
 		if strings.Contains(k, "windows") {
 			file := fmt.Sprintf("release/%v-%v-%v.zip", cmd.name, k, version)
@@ -121,6 +153,42 @@ func (cmd *publishToGithubCmd) Execute() {
 			releaseArtifacts = append(releaseArtifacts, file)
 		}
 	}
+
+	// Add non-executable artifacts to release artifacts
+	for _, artifact := range nonExecutableArtifacts {
+		releaseArtifacts = append(releaseArtifacts, artifact.sourcePath)
+	}
+
+	// Generate checksums files
+	checksumFile := filepath.Join(releaseDir, "checksums.sha256.txt")
+	attestationFile := filepath.Join(releaseDir, "attestation-subjects.sha256.txt")
+	checksumWriter, err := os.Create(checksumFile)
+	cmd.exitIfErrf(err, "failed to create checksums file: %v\n", err)
+	defer checksumWriter.Close()
+
+	attestationWriter, err := os.Create(attestationFile)
+	cmd.exitIfErrf(err, "failed to create attestation subjects file: %v\n", err)
+	defer attestationWriter.Close()
+
+	// Calculate checksums for all artifacts
+	for _, artifactPath := range releaseArtifacts {
+		data, err := os.ReadFile(artifactPath)
+		cmd.exitIfErrf(err, "failed to read artifact for checksum: %v\n", err)
+
+		hash := sha256.Sum256(data)
+		hexHash := hex.EncodeToString(hash[:])
+
+		// Write to checksums file with just filename
+		_, err = fmt.Fprintf(checksumWriter, "%s  %s\n", hexHash, filepath.Base(artifactPath))
+		cmd.exitIfErrf(err, "failed to write checksum: %v\n", err)
+
+		// Write to attestation file with ./release/ prefix
+		_, err = fmt.Fprintf(attestationWriter, "%s  ./release/%s\n", hexHash, filepath.Base(artifactPath))
+		cmd.exitIfErrf(err, "failed to write attestation subject: %v\n", err)
+	}
+
+	// Add checksums file to release artifacts
+	releaseArtifacts = append(releaseArtifacts, checksumFile)
 
 	releaseNotesFile := fmt.Sprintf("changelog-%v.md", version)
 	extractReleaseNotes("CHANGELOG.md", version, releaseNotesFile)
@@ -148,6 +216,7 @@ func (cmd *publishToGithubCmd) Execute() {
 func newPublishToGithubCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
 		Use:   "publish-to-github <name>",
+
 		Short: "Creates archives to be published",
 		Args:  cobra.RangeArgs(0, 1),
 	}
