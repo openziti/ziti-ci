@@ -69,8 +69,7 @@ func (cmd *publishToGithubCmd) Execute() {
 	for _, file := range topLevelFiles {
 		if !file.IsDir() {
 			name := file.Name()
-			if name == "checksums.sha256.txt" ||
-				(strings.HasPrefix(name, "source-") && strings.HasSuffix(name, ".tar.gz")) ||
+			if (strings.HasPrefix(name, "source-") && strings.HasSuffix(name, ".tar.gz")) ||
 				(strings.HasPrefix(name, "sbom-") && strings.HasSuffix(name, ".spdx.json")) {
 				filePath := filepath.Join(releaseDir, name)
 				nonExecutableArtifacts = append(nonExecutableArtifacts, &githubArtifact{
@@ -160,11 +159,16 @@ func (cmd *publishToGithubCmd) Execute() {
 		releaseArtifacts = append(releaseArtifacts, artifact.sourcePath)
 	}
 
-	// Generate checksums file
+	// Generate checksums files
 	checksumFile := filepath.Join(releaseDir, "checksums.sha256.txt")
+	attestationFile := filepath.Join(releaseDir, "attestation-subjects.sha256.txt")
 	checksumWriter, err := os.Create(checksumFile)
 	cmd.exitIfErrf(err, "failed to create checksums file: %v\n", err)
 	defer checksumWriter.Close()
+
+	attestationWriter, err := os.Create(attestationFile)
+	cmd.exitIfErrf(err, "failed to create attestation subjects file: %v\n", err)
+	defer attestationWriter.Close()
 
 	// Calculate checksums for all artifacts
 	for _, artifactPath := range releaseArtifacts {
@@ -174,11 +178,13 @@ func (cmd *publishToGithubCmd) Execute() {
 		hash := sha256.Sum256(data)
 		hexHash := hex.EncodeToString(hash[:])
 
-		// Use just the filename for the checksum file
-		relPath := filepath.Base(artifactPath)
-
-		_, err = fmt.Fprintf(checksumWriter, "%s  %s\n", hexHash, relPath)
+		// Write to checksums file with just filename
+		_, err = fmt.Fprintf(checksumWriter, "%s  %s\n", hexHash, filepath.Base(artifactPath))
 		cmd.exitIfErrf(err, "failed to write checksum: %v\n", err)
+
+		// Write to attestation file with ./release/ prefix
+		_, err = fmt.Fprintf(attestationWriter, "%s  ./release/%s\n", hexHash, filepath.Base(artifactPath))
+		cmd.exitIfErrf(err, "failed to write attestation subject: %v\n", err)
 	}
 
 	// Add checksums file to release artifacts
