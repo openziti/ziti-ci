@@ -19,10 +19,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"html/template"
 	"os"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 var goBuildInfoTemplate = `/*

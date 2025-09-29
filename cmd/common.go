@@ -25,8 +25,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-version"
-	"github.com/spf13/cobra"
 	"io"
 	"os"
 	"os/exec"
@@ -34,6 +32,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/hashicorp/go-version"
+	"github.com/spf13/cobra"
 )
 
 const (

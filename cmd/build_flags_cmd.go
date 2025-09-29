@@ -19,10 +19,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"golang.org/x/mod/modfile"
 	"os"
 	"time"
+
+	"github.com/spf13/cobra"
+	"golang.org/x/mod/modfile"
 )
 
 type GoBuildFlagsCmd struct {

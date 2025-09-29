@@ -1,6 +1,9 @@
 module github.com/openziti/ziti-ci
 
-go 1.23
+go 1.23.0
+
+toolchain go1.24.7
+
 require (
 	github.com/go-git/go-git/v5 v5.14.0
 	github.com/go-resty/resty/v2 v2.16.5

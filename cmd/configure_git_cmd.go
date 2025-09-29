@@ -21,12 +21,13 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 type configureGitCmd struct {

@@ -215,7 +215,7 @@ func (cmd *publishToGithubCmd) Execute() {
 
 func newPublishToGithubCmd(root *RootCommand) *cobra.Command {
 	cobraCmd := &cobra.Command{
-		Use:   "publish-to-github <name>",
+		Use: "publish-to-github <name>",
 
 		Short: "Creates archives to be published",
 		Args:  cobra.RangeArgs(0, 1),

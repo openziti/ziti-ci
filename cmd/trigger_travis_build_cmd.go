@@ -19,11 +19,12 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/go-resty/resty/v2"
-	"github.com/spf13/cobra"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/spf13/cobra"
 )
 
 type triggerTravisBuidlCmd struct {

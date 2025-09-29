@@ -18,9 +18,10 @@
 package cmd
 
 import (
-	"github.com/hashicorp/go-version"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/go-version"
 )
 
 const (

@@ -19,25 +19,28 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	"golang.org/x/mod/modfile"
-	"golang.org/x/mod/module"
 	"io"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/hashicorp/go-version"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"golang.org/x/mod/modfile"
+	"golang.org/x/mod/module"
 )
 
 type baseBuildReleaseNotesCmd struct {
 	BaseCommand
 	AllCommits    bool
 	ShowUnchanged bool
+	StartVersion  string
 }
 
 type buildReleaseNotesCmd struct {
@@ -83,6 +86,14 @@ func (cmd *baseBuildReleaseNotesCmd) getPreviousVersion(path string) *string {
 func (cmd *buildReleaseNotesCmd) Execute() {
 	if !cmd.RootCobraCmd.Flags().Changed("quiet") {
 		cmd.quiet = true
+	}
+
+	if cmd.StartVersion != "" {
+		v, err := version.NewVersion(cmd.StartVersion)
+		if err != nil {
+			panic(err)
+		}
+		cmd.CurrentVersion = v
 	}
 
 	cmd.EvalCurrentAndNextVersion()
@@ -336,6 +347,7 @@ func newBuildReleaseNotesCmd(root *RootCommand) *cobra.Command {
 
 	cobraCmd.Flags().BoolVarP(&result.AllCommits, "all-commits", "a", false, "Show all commits, not just closed issues")
 	cobraCmd.Flags().BoolVarP(&result.ShowUnchanged, "show-unchanged", "u", false, "Show OpenZiti upstream libraries, even if unchanged")
+	cobraCmd.Flags().StringVarP(&result.StartVersion, "start-version", "s", "", "Version to use a starting point when diffing against")
 
 	return Finalize(result)
 }
