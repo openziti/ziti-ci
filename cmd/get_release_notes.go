@@ -24,6 +24,7 @@ import (
 	"os"
 	"strings"
 
+	goVersion "github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +41,11 @@ func extractReleaseNotes(changelog string, version string, outfile string) {
 		panic(err)
 	}
 	defer func() { _ = file.Close() }()
+
+	semVer, err := goVersion.NewVersion(version)
+	if err != nil {
+		panic(err)
+	}
 
 	var out io.WriteCloser
 	if outfile == "" {
@@ -61,7 +67,10 @@ func extractReleaseNotes(changelog string, version string, outfile string) {
 			if startFound {
 				return
 			}
+
 			if version == "" || strings.HasPrefix(line, fmt.Sprintf("# Release %v", version)) {
+				startFound = true
+			} else if semVer.Prerelease() != "" && strings.HasPrefix(line, fmt.Sprintf("# Release %v", semVer.Core().String())) {
 				startFound = true
 			}
 		}
