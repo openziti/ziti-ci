@@ -178,9 +178,11 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 		return errors.Wrapf(err, "")
 	}
 
-	cmd.runGitCommandAlways("fetch latest tags", "fetch", "--tags")
+	if !cmd.noFetch {
+		cmd.runGitCommandAlways("fetch latest tags", "fetch", "--tags")
+	}
 
-	r, err := git.PlainOpen(".")
+	r, err := git.PlainOpenWithOptions(".", &git.PlainOpenOptions{EnableDotGitCommonDir: true})
 	if err != nil {
 		return err
 	}

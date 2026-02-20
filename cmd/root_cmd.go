@@ -40,6 +40,7 @@ type RootCommand struct {
 	useCurrentTag bool
 	dryRun        bool
 	quiet         bool
+	noFetch       bool
 
 	langName string
 	lang     langType
@@ -66,6 +67,7 @@ func newRootCommand() *RootCommand {
 
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionString, "base-version", "b", "", "set base version")
 	cobraCmd.PersistentFlags().StringVarP(&rootCmd.baseVersionFile, "base-version-file", "f", DefaultVersionFile, "set base version file location")
+	cobraCmd.PersistentFlags().BoolVar(&rootCmd.noFetch, "no-fetch", false, "skip git fetch --tags (useful when running locally with SSH agent issues)")
 
 	rootCobraCmd := rootCmd.RootCobraCmd
 
