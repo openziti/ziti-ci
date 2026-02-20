@@ -147,7 +147,9 @@ func (cmd *BaseCommand) GetCobraCmd() *cobra.Command {
 }
 
 func (cmd *BaseCommand) EvalCurrentAndNextVersion() {
-	cmd.runGitCommandAlways("fetching git tags", "fetch", "--tags", "--force")
+	if !cmd.noFetch {
+		cmd.runGitCommandAlways("fetching git tags", "fetch", "--tags", "--force")
+	}
 	versions := cmd.getVersionList("tag", "--list")
 
 	min := setPatch(cmd.BaseVersion, 0)
