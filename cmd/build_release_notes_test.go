@@ -35,10 +35,13 @@ func TestExtractIssues(t *testing.T) {
 	req.Equal(a("20", "10", "5"), getIssues("This commit fixes #20, closes #10 and resolves #5"))
 	req.Equal(a("20", "10", "5"), getIssues("This commit fix #20, close #10 and resolve #5"))
 	req.Equal(a("20", "10", "5"), getIssues("This commit fixed #20, closed #10 and resolved #5"))
+	req.Equal(a("2324"), getIssues("fixes openziti/ziti#2324 add token based enrollment"))
+	req.Equal(a("3354"), getIssues("fix openziti/ziti#3354 sdk/env details not distributed"))
+	req.Nil(getIssues("fixes openziti/other-project#999 should not match"))
 }
 
 func getIssues(s string) []string {
-	return (&buildReleaseNotesCmd{}).extractIssues(&object.Commit{
+	return (&buildReleaseNotesCmd{}).extractIssues("ziti", &object.Commit{
 		Message: s,
 	})
 }

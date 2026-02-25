@@ -287,7 +287,7 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 		}
 
 		issueFound := false
-		for _, issue := range cmd.extractIssues(c) {
+		for _, issue := range cmd.extractIssues(project, c) {
 			if _, ok := issues[issue]; !ok {
 				cmd.outputIssue(issue)
 				showedChange = true
@@ -305,8 +305,8 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 	}
 }
 
-func (cmd *baseBuildReleaseNotesCmd) extractIssues(c *object.Commit) []string {
-	r, err := regexp.Compile(`(fix(e[sd])?|close[sd]?|resolve[sd]?)\s*#(\d+)`)
+func (cmd *baseBuildReleaseNotesCmd) extractIssues(project string, c *object.Commit) []string {
+	r, err := regexp.Compile(`(fix(e[sd])?|close[sd]?|resolve[sd]?)\s*(openziti/` + regexp.QuoteMeta(project) + `)?#(\d+)`)
 	if err != nil {
 		panic(err)
 	}
@@ -314,7 +314,7 @@ func (cmd *baseBuildReleaseNotesCmd) extractIssues(c *object.Commit) []string {
 	matches := r.FindAllStringSubmatch(strings.ToLower(c.Message), -1)
 	var result []string
 	for _, match := range matches {
-		result = append(result, match[3])
+		result = append(result, match[4])
 	}
 	return result
 }
