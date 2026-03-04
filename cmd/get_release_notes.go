@@ -21,6 +21,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -42,9 +43,14 @@ func extractReleaseNotes(changelog string, version string, outfile string) {
 	}
 	defer func() { _ = file.Close() }()
 
-	semVer, err := goVersion.NewVersion(version)
-	if err != nil {
-		panic(err)
+	var semVer *goVersion.Version
+
+	if version != "" {
+		semVer, err = goVersion.NewVersion(version)
+		if err != nil {
+			slog.Error("version parsing failed", "version", version, "err", err)
+			panic(err)
+		}
 	}
 
 	var out io.WriteCloser
@@ -70,7 +76,7 @@ func extractReleaseNotes(changelog string, version string, outfile string) {
 
 			if version == "" || strings.HasPrefix(line, fmt.Sprintf("# Release %v", version)) {
 				startFound = true
-			} else if semVer.Prerelease() != "" && strings.HasPrefix(line, fmt.Sprintf("# Release %v", semVer.Core().String())) {
+			} else if semVer != nil && semVer.Prerelease() != "" && strings.HasPrefix(line, fmt.Sprintf("# Release %v", semVer.Core().String())) {
 				startFound = true
 			}
 		}
