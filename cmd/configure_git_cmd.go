@@ -21,7 +21,6 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -52,7 +51,7 @@ func (cmd *configureGitCmd) Execute() {
 		if err != nil {
 			cmd.Failf("unable to decode ssh key. err: %v\n", err)
 		}
-		if err = ioutil.WriteFile(cmd.sshKeyFile, sshKey, 0600); err != nil {
+		if err = os.WriteFile(cmd.sshKeyFile, sshKey, 0600); err != nil {
 			cmd.Failf("unable to write ssh key file %v. err: %v\n", cmd.sshKeyFile, err)
 		}
 	} else {
@@ -75,20 +74,26 @@ func (cmd *configureGitCmd) Execute() {
 				ignoreExists = true
 			}
 		}
-		file.Close()
+		if closeErr := file.Close(); closeErr != nil {
+			cmd.Warnf("unable to close gitignore file. err: %v\n", closeErr)
+		}
 	} else {
 		cmd.Infof("unable to scan .gitignore: %v\n", err)
 	}
 
 	if !ignoreExists {
-		cmd.Infof("adding " + cmd.sshKeyFile + " to .gitignore\n")
+		cmd.Infof("adding %s to .gitignore\n", cmd.sshKeyFile)
 		//add the deploy key to .gitignore... next to whereever the sshkey goes...
 		f, err := os.OpenFile(keyDir+string(os.PathSeparator)+".gitignore",
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			cmd.Failf("could not write to .gitignore (%v)\n", err)
 		}
-		defer f.Close()
+		defer func() {
+			if closeErr := f.Close(); closeErr != nil {
+				cmd.Warnf("unable to close gitignore file. err: %v\n", closeErr)
+			}
+		}()
 		if _, err := f.WriteString("\n" + cmd.sshKeyFile + "\n"); err != nil {
 			cmd.Failf("error writing to .gitignore (%v)\n", err)
 		}

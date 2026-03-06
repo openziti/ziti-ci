@@ -41,6 +41,18 @@ type baseBuildReleaseNotesCmd struct {
 	AllCommits    bool
 	ShowUnchanged bool
 	StartVersion  string
+	Writer        io.Writer
+}
+
+func (cmd *baseBuildReleaseNotesCmd) getWriter() io.Writer {
+	if cmd.Writer != nil {
+		return cmd.Writer
+	}
+	return os.Stdout
+}
+
+func (cmd *baseBuildReleaseNotesCmd) printf(format string, args ...interface{}) {
+	fmt.Fprintf(cmd.getWriter(), format, args...)
 }
 
 type buildReleaseNotesCmd struct {
@@ -87,7 +99,11 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 	if !cmd.RootCobraCmd.Flags().Changed("quiet") {
 		cmd.quiet = true
 	}
+	cmd.initVersions()
+	cmd.generateReleaseNotes()
+}
 
+func (cmd *buildReleaseNotesCmd) initVersions() {
 	if cmd.StartVersion != "" {
 		v, err := version.NewVersion(cmd.StartVersion)
 		if err != nil {
@@ -97,9 +113,10 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 	}
 
 	cmd.EvalCurrentAndNextVersion()
-	if !cmd.quiet {
-		fmt.Printf("Release notes %v -> %v\n", cmd.CurrentVersion, cmd.NextVersion)
-	}
+}
+
+func (cmd *buildReleaseNotesCmd) generateReleaseNotes() {
+	cmd.Infof("generating release notes %v -> %v\n", cmd.CurrentVersion, cmd.NextVersion)
 
 	data, err := os.ReadFile("go.mod")
 	if err != nil {
@@ -128,6 +145,7 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 
 	for _, m := range newGoMod.Require {
 		if strings.Contains(m.Mod.Path, "openziti") {
+			cmd.Infof("checking dependency %v\n", m.Mod.Path)
 			project := strings.Split(m.Mod.Path, "/")[2]
 			prev, found := oldVersions[m.Mod.Path]
 			if !found {
@@ -142,27 +160,28 @@ func (cmd *buildReleaseNotesCmd) Execute() {
 				}
 			}
 			if !found {
-				fmt.Printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
+				cmd.printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
 			} else if m.Mod.Version != prev.Mod.Version {
-				fmt.Printf("* %v: [%v -> %v](https://github.com/openziti/%v/compare/%v...%v)\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
+				cmd.printf("* %v: [%v -> %v](https://github.com/openziti/%v/compare/%v...%v)\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
 				if err = cmd.GetChanges(project, prev.Mod.Version, m.Mod.Version); err != nil {
 					panic(err)
 				}
 			} else if cmd.ShowUnchanged {
-				fmt.Printf("* %v: %v (unchanged)\n", m.Mod.Path, m.Mod.Version)
+				cmd.printf("* %v: %v (unchanged)\n", m.Mod.Path, m.Mod.Version)
 			}
 		}
 	}
 
-	fmt.Printf("* %v: [v%v -> v%v](https://github.com/openziti/ziti/compare/v%v...v%v)\n",
+	cmd.Infof("checking dependency %v\n", newGoMod.Module.Mod.Path)
+	cmd.printf("* %v: [v%v -> v%v](https://github.com/openziti/ziti/compare/v%v...v%v)\n",
 		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
 	if err = cmd.GetChanges("ziti", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
 		panic(err)
 	}
-
 }
 
 func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion string, newVersion string) error {
+	cmd.Infof("  scanning changes for %v (%v -> %v)\n", project, oldVersion, newVersion)
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.Wrapf(err, "unable to get working directory")
@@ -259,7 +278,7 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 	defer iter.Close()
 	defer func() {
 		if showedChange {
-			fmt.Println()
+			cmd.printf("\n")
 		}
 	}()
 
@@ -298,7 +317,7 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 
 		if !issueFound && cmd.AllCommits {
 			lines := strings.Split(c.Message, "\n")
-			fmt.Printf("    * %v: %v (%v)\n", c.Hash.String()[:7], lines[0], c.Author.Email)
+			cmd.printf("    * %v: %v (%v)\n", c.Hash.String()[:7], lines[0], c.Author.Email)
 			showedChange = true
 		}
 
@@ -320,6 +339,7 @@ func (cmd *baseBuildReleaseNotesCmd) extractIssues(project string, c *object.Com
 }
 
 func (cmd *baseBuildReleaseNotesCmd) outputIssue(issue string) {
+	cmd.Infof("  looking up issue #%v\n", issue)
 	bin, err := exec.LookPath("gh")
 	if err != nil {
 		panic(errors.Wrap(err, "gh (github CLI) not found. Please make sure it's installed an you are authenticated"))
@@ -327,7 +347,7 @@ func (cmd *baseBuildReleaseNotesCmd) outputIssue(issue string) {
 	out, err := cmd.runCommandWithOutputFailOptional(false, "Get Issue", bin,
 		"issue", "view", issue, "--json", "number,title,url", "--jq", `"[Issue #" + (.number|tostring) + "](" + .url + ") - " + .title`)
 	if err == nil {
-		fmt.Printf("    * %v\n", out[0])
+		cmd.printf("    * %v\n", out[0])
 	}
 }
 

@@ -36,9 +36,9 @@ func (cmd *buildSdkReleaseNotesCmd) Execute() {
 	}
 
 	cmd.EvalCurrentAndNextVersion()
-	fmt.Printf("# Release notes %v\n", cmd.NextVersion)
-	fmt.Println("\n## Issues Fixed and Dependency Updates")
-	fmt.Println()
+	cmd.printf("# Release notes %v\n", cmd.NextVersion)
+	cmd.printf("\n## Issues Fixed and Dependency Updates\n")
+	cmd.printf("\n")
 
 	data, err := os.ReadFile("go.mod")
 	if err != nil {
@@ -57,7 +57,7 @@ func (cmd *buildSdkReleaseNotesCmd) Execute() {
 		panic(err)
 	}
 
-	fmt.Printf("* %v: [v%v -> v%v](https://github.com/openziti/sdk-golang/compare/v%v...v%v)\n",
+	cmd.printf("* %v: [v%v -> v%v](https://github.com/openziti/sdk-golang/compare/v%v...v%v)\n",
 		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
 	if err = cmd.GetChanges("sdk-golang", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
 		panic(err)
@@ -83,21 +83,21 @@ func (cmd *buildSdkReleaseNotesCmd) Execute() {
 			}
 		}
 		if !found {
-			fmt.Printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
+			cmd.printf("* %v: %v (new)\n", m.Mod.Path, m.Mod.Version)
 		} else if m.Mod.Version != prev.Mod.Version {
 			if strings.Contains(m.Mod.Path, "openziti") {
 				project := strings.Split(m.Mod.Path, "/")[2]
-				fmt.Printf("* %v: [%v -> %v](https://github.com/openziti/%v/compare/%v...%v)\n",
+				cmd.printf("* %v: [%v -> %v](https://github.com/openziti/%v/compare/%v...%v)\n",
 					m.Mod.Path, prev.Mod.Version, m.Mod.Version, project, prev.Mod.Version, m.Mod.Version)
 				if err = cmd.GetChanges(project, prev.Mod.Version, m.Mod.Version); err != nil {
 					panic(err)
 				}
 			} else {
-				fmt.Printf("* %v: %v -> %v\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version)
+				cmd.printf("* %v: %v -> %v\n", m.Mod.Path, prev.Mod.Version, m.Mod.Version)
 			}
 
 		} else if cmd.ShowUnchanged {
-			fmt.Printf("* %v: %v (unchanged)\n", m.Mod.Path, m.Mod.Version)
+			cmd.printf("* %v: %v (unchanged)\n", m.Mod.Path, m.Mod.Version)
 		}
 	}
 }

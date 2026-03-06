@@ -92,6 +92,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newGetReleaseNotesCmd(rootCmd))
 	rootCobraCmd.AddCommand(newBuildReleaseNotesCmd(rootCmd))
 	rootCobraCmd.AddCommand(newBuildSdkReleaseNotesCmd(rootCmd))
+	rootCobraCmd.AddCommand(newUpdateReleaseNotesCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
