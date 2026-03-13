@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
 	"golang.org/x/mod/modfile"
 )
@@ -31,15 +32,40 @@ type buildSdkReleaseNotesCmd struct {
 }
 
 func (cmd *buildSdkReleaseNotesCmd) Execute() {
+	cmd.initVersions()
+	cmd.generateSdkReleaseNotes()
+}
+
+// initVersions sets quiet mode, handles an optional StartVersion, and evaluates
+// the current and next version from tags.
+func (cmd *buildSdkReleaseNotesCmd) initVersions() {
 	if !cmd.RootCobraCmd.Flags().Changed("quiet") {
 		cmd.quiet = true
 	}
 
+	if cmd.StartVersion != "" {
+		v, err := version.NewVersion(cmd.StartVersion)
+		if err != nil {
+			panic(err)
+		}
+		cmd.CurrentVersion = v
+	}
+
 	cmd.EvalCurrentAndNextVersion()
+}
+
+// generateSdkReleaseNotes outputs the full release notes section for the SDK,
+// including the version header and dependency updates.
+func (cmd *buildSdkReleaseNotesCmd) generateSdkReleaseNotes() {
 	cmd.printf("# Release notes %v\n", cmd.NextVersion)
 	cmd.printf("\n## Issues Fixed and Dependency Updates\n")
 	cmd.printf("\n")
+	cmd.generateSdkDependencyUpdates()
+}
 
+// generateSdkDependencyUpdates outputs the dependency update bullet points by
+// diffing go.mod against the previous version.
+func (cmd *buildSdkReleaseNotesCmd) generateSdkDependencyUpdates() {
 	data, err := os.ReadFile("go.mod")
 	if err != nil {
 		panic(err)
