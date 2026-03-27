@@ -237,30 +237,8 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 		return err
 	}
 
-	// The old tag may be a tag commit not in the main-line, so we'll have to find the parent
-	if project == "ziti" || project == "sdk-golang" {
-		if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
-			tagCommit, err = tagCommit.Parent(0)
-			if err != nil {
-				return err
-			}
-		}
-		// find first non-merge commit
-		for tagCommit.NumParents() > 1 {
-			var parent *object.Commit
-			err = tagCommit.Parents().ForEach(func(commit *object.Commit) error {
-				if parent == nil || commit.Author.When.After(parent.Author.When) {
-					parent = commit
-				}
-				return nil
-			})
-			if err != nil {
-				panic(err)
-			}
-			tagCommit = parent
-		}
-		oldTagHash = &tagCommit.Hash
-	} else if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
+	// The old tag may be a ziti-ci version-bump commit not in the main-line, so find its parent
+	if tagCommit.NumParents() == 1 && tagCommit.Author.Name == "ziti-ci" {
 		tagCommit, err = tagCommit.Parent(0)
 		if err != nil {
 			return err
