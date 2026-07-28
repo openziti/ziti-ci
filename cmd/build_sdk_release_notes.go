@@ -49,9 +49,12 @@ func (cmd *buildSdkReleaseNotesCmd) initVersions() {
 			panic(err)
 		}
 		cmd.CurrentVersion = v
+		cmd.EvalCurrentAndNextVersion()
+		return
 	}
 
 	cmd.EvalCurrentAndNextVersion()
+	cmd.evalStartVersion()
 }
 
 // generateSdkReleaseNotes outputs the full release notes section for the SDK,
@@ -146,6 +149,7 @@ func newBuildSdkReleaseNotesCmd(root *RootCommand) *cobra.Command {
 
 	cobraCmd.Flags().BoolVarP(&result.AllCommits, "all-commits", "a", false, "Show all commits, not just closed issues")
 	cobraCmd.Flags().BoolVarP(&result.ShowUnchanged, "show-unchanged", "u", false, "Show OpenZiti upstream libraries, even if unchanged")
+	cobraCmd.Flags().BoolVar(&result.NoPrScan, "no-pr-scan", false, "Don't inspect pull requests for issue links missing from commit messages")
 
 	return Finalize(result)
 }

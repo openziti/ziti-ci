@@ -34,14 +34,6 @@ type updateReleaseNotesCmd struct {
 }
 
 func (cmd *updateReleaseNotesCmd) Execute() {
-	var buf bytes.Buffer
-	cmd.Writer = &buf
-
-	cmd.initVersions()
-	cmd.generateReleaseNotes()
-
-	newSection := buf.String()
-
 	data, err := os.ReadFile(cmd.ChangelogFile)
 	if err != nil {
 		panic(fmt.Errorf("unable to read changelog file %v: %w", cmd.ChangelogFile, err))
@@ -72,6 +64,17 @@ func (cmd *updateReleaseNotesCmd) Execute() {
 		searchIdx = lineStart
 	}
 
+	oldEntries := parseIssueEntries(content[afterHeader:endIdx])
+
+	var buf bytes.Buffer
+	cmd.Writer = &buf
+
+	cmd.initVersions()
+	cmd.generateReleaseNotes()
+
+	newSection := mergePinnedEntries(buf.String(), oldEntries)
+	dropped := droppedEntries(oldEntries, newSection)
+
 	var result strings.Builder
 	result.WriteString(content[:sectionIdx])
 	result.WriteString(componentUpdatesHeader)
@@ -87,6 +90,7 @@ func (cmd *updateReleaseNotesCmd) Execute() {
 	}
 
 	fmt.Printf("Updated %q section in %v\n", componentUpdatesHeader, cmd.ChangelogFile)
+	cmd.reportDropped(dropped)
 }
 
 func newUpdateReleaseNotesCmd(root *RootCommand) *cobra.Command {
@@ -110,7 +114,8 @@ func newUpdateReleaseNotesCmd(root *RootCommand) *cobra.Command {
 
 	cobraCmd.Flags().BoolVarP(&result.AllCommits, "all-commits", "a", false, "Show all commits, not just closed issues")
 	cobraCmd.Flags().BoolVarP(&result.ShowUnchanged, "show-unchanged", "u", false, "Show OpenZiti upstream libraries, even if unchanged")
-	cobraCmd.Flags().StringVarP(&result.StartVersion, "start-version", "s", "", "Version to use a starting point when diffing against")
+	cobraCmd.Flags().BoolVar(&result.NoPrScan, "no-pr-scan", false, "Don't inspect pull requests for issue links missing from commit messages")
+	cobraCmd.Flags().StringVarP(&result.StartVersion, "start-version", "s", "", "Version to diff against, instead of the previous release in the same minor, or the previous minor release")
 	cobraCmd.Flags().StringVarP(&result.ChangelogFile, "changelog-file", "c", "CHANGELOG.md", "Path to the changelog file to update")
 
 	return Finalize(result)
