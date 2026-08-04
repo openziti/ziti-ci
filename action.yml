@@ -8,6 +8,16 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # actions/setup-go pins GOTOOLCHAIN=local, which makes go refuse to run as soon as a go.mod
+    # asks for a newer version than the one setup-go installed. That happens routinely: setup-go
+    # resolves go-version-file before update-go-dependency merges main, and a dependency update can
+    # raise the go directive on its own. Letting go fetch the toolchain go.mod asks for avoids both.
+    - name: allow go to fetch the toolchain go.mod requires
+      shell: bash
+      run: echo "GOTOOLCHAIN=auto" >> "$GITHUB_ENV"
+
     - name: install ziti-ci
       shell: bash
+      env:
+        GOTOOLCHAIN: auto
       run: go install github.com/openziti/ziti-ci@${{ inputs.ziti-ci-version }}

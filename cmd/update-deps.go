@@ -30,6 +30,8 @@ type updateGoDepCmd struct {
 }
 
 func (cmd *updateGoDepCmd) Execute() {
+	cmd.allowToolchainDownload()
+
 	cmd.RunGitCommand("Allow fetching other branches", "config", "--replace-all", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
 	//seems to have broken update deps... cmd.RunGitCommand("Ensure " + cmd.GetCurrentBranch() + " is up to date", "fetch", "origin", cmd.GetCurrentBranch())
 	cmd.RunGitCommand("Ensure origin/main is up to date", "fetch", "origin", "main")
@@ -56,6 +58,22 @@ func (cmd *updateGoDepCmd) Execute() {
 	cmd.runCommand("Tidy go.sum", "go", "mod", "tidy")
 	cmd.RunGitCommand("Add go mod changes", "add", "go.mod", "go.sum")
 	cmd.RunGitCommand("Commit go.mod changes", "commit", "-m", fmt.Sprintf("Updating dependency %v", dep))
+}
+
+// allowToolchainDownload sets GOTOOLCHAIN=auto for this process and everything it spawns, so the go
+// commands below can fetch a newer toolchain if go.mod asks for one.
+//
+// Both steps that follow can raise the required go version out from under whatever toolchain is
+// installed: merging main picks up a go directive bumped since this branch was last synced, and
+// updating a dependency can bump the directive by itself. CI installs go with actions/setup-go,
+// which pins GOTOOLCHAIN=local, so either case is a hard failure rather than a download.
+func (cmd *updateGoDepCmd) allowToolchainDownload() {
+	if current := os.Getenv("GOTOOLCHAIN"); current != "auto" {
+		cmd.Infof("Setting GOTOOLCHAIN=auto (was %q)\n", current)
+		if err := os.Setenv("GOTOOLCHAIN", "auto"); err != nil {
+			cmd.Failf("error setting GOTOOLCHAIN=auto: %v\n", err)
+		}
+	}
 }
 
 func (cmd *updateGoDepCmd) getUpdatedDep() string {
