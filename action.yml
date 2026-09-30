@@ -20,4 +20,16 @@ runs:
       shell: bash
       env:
         GOTOOLCHAIN: auto
-      run: go install github.com/openziti/ziti-ci@${{ inputs.ziti-ci-version }}
+        ZITI_CI_VERSION: ${{ inputs.ziti-ci-version }}
+      run: |
+        for attempt in 1 2 3; do
+          if go install "github.com/openziti/ziti-ci@${ZITI_CI_VERSION}"; then
+            exit 0
+          fi
+          if [ "${attempt}" -lt 3 ]; then
+            echo "::warning::go install of ziti-ci failed (attempt ${attempt}), retrying"
+            sleep $((attempt * 20))
+          fi
+        done
+        echo "::error::go install of ziti-ci failed after 3 attempts"
+        exit 1
