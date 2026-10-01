@@ -356,18 +356,14 @@ func (cmd *baseBuildReleaseNotesCmd) extractIssues(project string, c *object.Com
 	return cmd.extractIssuesFromText(project, c.Message)
 }
 
-// extractIssuesFromText returns the issues that the given text claims to close, either as
-// a bare issue number or one qualified with the project's repository.
+// extractIssuesFromText returns the issues that the given text claims to close in the project's
+// repository, as found by ClosingIssueRefs, in order of appearance.
 func (cmd *baseBuildReleaseNotesCmd) extractIssuesFromText(project string, text string) []string {
-	r, err := regexp.Compile(`(fix(e[sd])?|close[sd]?|resolve[sd]?)\s*(openziti/` + regexp.QuoteMeta(project) + `)?#(\d+)`)
-	if err != nil {
-		panic(err)
-	}
-
-	matches := r.FindAllStringSubmatch(strings.ToLower(text), -1)
 	var result []string
-	for _, match := range matches {
-		result = append(result, match[4])
+	for _, ref := range ClosingIssueRefs(text) {
+		if ref.InRepo("openziti/" + project) {
+			result = append(result, strconv.Itoa(ref.Number))
+		}
 	}
 	return result
 }

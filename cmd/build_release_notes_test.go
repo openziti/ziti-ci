@@ -37,6 +37,10 @@ func TestExtractIssues(t *testing.T) {
 	req.Equal(a("20", "10", "5"), getIssues("This commit fixed #20, closed #10 and resolved #5"))
 	req.Equal(a("2324"), getIssues("fixes openziti/ziti#2324 add token based enrollment"))
 	req.Equal(a("3354"), getIssues("fix openziti/ziti#3354 sdk/env details not distributed"))
+	req.Equal(a("12"), getIssues("Closes: #12"))
+	req.Equal(a("17"), getIssues("fixes https://github.com/openziti/ziti/issues/17"))
+	req.Nil(getIssues("prefixes #18 and unfixed #19"))
+	req.Nil(getIssues("Fixed#21"))
 	req.Nil(getIssues("fixes openziti/other-project#999 should not match"))
 }
 
