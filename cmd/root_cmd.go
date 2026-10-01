@@ -94,6 +94,7 @@ func newRootCommand() *RootCommand {
 	rootCobraCmd.AddCommand(newBuildSdkReleaseNotesCmd(rootCmd))
 	rootCobraCmd.AddCommand(newUpdateReleaseNotesCmd(rootCmd))
 	rootCobraCmd.AddCommand(newUpdateSdkReleaseNotesCmd(rootCmd))
+	rootCobraCmd.AddCommand(newCloseBackportIssuesCmd(rootCmd))
 
 	var versionCmd = &cobra.Command{
 		Use:   "version",
