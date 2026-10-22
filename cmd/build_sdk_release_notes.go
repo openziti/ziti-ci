@@ -88,7 +88,7 @@ func (cmd *buildSdkReleaseNotesCmd) generateSdkDependencyUpdates() {
 
 	cmd.printf("* %v: [v%v -> v%v](https://github.com/openziti/sdk-golang/compare/v%v...v%v)\n",
 		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
-	if err = cmd.GetChanges("sdk-golang", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
+	if err = cmd.GetOwnChanges("sdk-golang", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
 		panic(err)
 	}
 

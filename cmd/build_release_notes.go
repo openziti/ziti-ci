@@ -184,7 +184,7 @@ func (cmd *buildReleaseNotesCmd) generateReleaseNotes() {
 	cmd.Infof("checking dependency %v\n", newGoMod.Module.Mod.Path)
 	cmd.printf("* %v: [v%v -> v%v](https://github.com/openziti/ziti/compare/v%v...v%v)\n",
 		newGoMod.Module.Mod.Path, cmd.CurrentVersion, cmd.NextVersion, cmd.CurrentVersion, cmd.NextVersion)
-	if err = cmd.GetChanges("ziti", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
+	if err = cmd.GetOwnChanges("ziti", "v"+cmd.CurrentVersion.String(), "HEAD"); err != nil {
 		panic(err)
 	}
 }
@@ -224,7 +224,19 @@ func sameMinor(v1 *version.Version, v2 *version.Version) bool {
 	return v1.Segments()[0] == v2.Segments()[0] && v1.Segments()[1] == v2.Segments()[1]
 }
 
+// GetChanges prints the issues closed in a dependency, project, between oldVersion and
+// newVersion, reading its history from the project's checkout beside this one, ../<project>.
 func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion string, newVersion string) error {
+	return cmd.getChangesIn("../"+project, project, oldVersion, newVersion)
+}
+
+// GetOwnChanges is GetChanges for the project this command runs in, reading its history from the
+// current checkout, whatever the checkout's directory is named.
+func (cmd *baseBuildReleaseNotesCmd) GetOwnChanges(project string, oldVersion string, newVersion string) error {
+	return cmd.getChangesIn(".", project, oldVersion, newVersion)
+}
+
+func (cmd *baseBuildReleaseNotesCmd) getChangesIn(checkout string, project string, oldVersion string, newVersion string) error {
 	cmd.Infof("  scanning changes for %v (%v -> %v)\n", project, oldVersion, newVersion)
 	dir, err := os.Getwd()
 	if err != nil {
@@ -237,8 +249,8 @@ func (cmd *baseBuildReleaseNotesCmd) GetChanges(project string, oldVersion strin
 		}
 	}()
 
-	if err := os.Chdir("../" + project); err != nil {
-		return errors.Wrapf(err, "")
+	if err := os.Chdir(checkout); err != nil {
+		return errors.Wrapf(err, "unable to read the history of %v", project)
 	}
 
 	if !cmd.noFetch {
